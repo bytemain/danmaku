@@ -9,3 +9,11 @@ contextBridge.exposeInMainWorld(
     ping: async () => await ipcRenderer.invoke('ping'),
   })
 );
+
+contextBridge.exposeInMainWorld(
+  'danmaku',
+  /** @type {import('./index').IMainWorld['danmaku']} */
+  ({
+    open: async () => await ipcRenderer.invoke('open-danmaku'),
+  })
+);

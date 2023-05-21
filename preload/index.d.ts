@@ -5,4 +5,7 @@ export interface IMainWorld {
     node: () => string;
     ping: () => Promise<string>;
   };
+  danmaku: {
+    open: () => void;
+  };
 }

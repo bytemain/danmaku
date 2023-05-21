@@ -14,10 +14,30 @@ const createWindow = () => {
 
   ipcMain.handle('ping', () => 'pong');
 
+  ipcMain.handle('open-danmaku', () => {
+    createDanmakuWindow();
+  });
+
   if (process.env.NODE_ENV === 'production') {
-    win.loadFile(path.join(__dirname, '../renderer-react/dist/index.html'));
+    win.loadFile(path.join(__dirname, '../renderer/dist/index.html'));
   } else {
     win.loadURL('http://localhost:5173');
+  }
+};
+
+const createDanmakuWindow = () => {
+  const win = new BrowserWindow({
+    width: 800,
+    height: 600,
+    webPreferences: {
+      preload: path.join(__dirname, '../preload/danmaku/index.js'),
+    },
+  });
+
+  if (process.env.NODE_ENV === 'production') {
+    win.loadFile(path.join(__dirname, '../renderer/dist/danmaku.html'));
+  } else {
+    win.loadURL('http://localhost:5173/danmaku.html');
   }
 };
 
