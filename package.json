@@ -22,5 +22,9 @@
   "dependencies": {
     "electron-squirrel-startup": "^1.0.0",
     "update-electron-app": "^2.0.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:bytemain/danmaku.git"
   }
 }

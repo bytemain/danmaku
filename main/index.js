@@ -14,7 +14,11 @@ const createWindow = () => {
 
   ipcMain.handle('ping', () => 'pong');
 
-  win.loadFile(path.join(__dirname, '../renderer/index.html'));
+  if (process.env.NODE_ENV === 'production') {
+    win.loadFile(path.join(__dirname, '../renderer-react/dist/index.html'));
+  } else {
+    win.loadURL('http://localhost:5173');
+  }
 };
 
 app.whenReady().then(() => {
