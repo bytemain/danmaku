@@ -13,9 +13,7 @@ if (information) {
   information.innerText = `This app is using Chrome (v${versions.chrome()}), Node.js (v${versions.node()}), and Electron (v${versions.electron()})`;
 }
 
-const func = async () => {
-  const response = await versions.ping();
-  console.log(response); // prints out 'pong'
-};
-
-func();
+window.addEventListener('contextmenu', (e) => {
+  e.preventDefault();
+  operation.rightClick();
+});
