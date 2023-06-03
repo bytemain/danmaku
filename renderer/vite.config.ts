@@ -13,6 +13,11 @@ export default defineConfig({
       },
     },
   },
+  server: {
+    watch: {
+      usePolling: true,
+    },
+  },
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),

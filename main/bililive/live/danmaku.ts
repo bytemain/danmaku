@@ -1,7 +1,23 @@
+import { EventEmitter } from 'events';
 import { APIClient, RoomInfo } from './api';
-import { Packet, decode, encode, EPacketType, PopularityBody } from './packet';
+import {
+  Packet,
+  decode,
+  encode,
+  EPacketType,
+  PopularityBody,
+  ENotificationType,
+  EGiftType,
+} from './packet';
 
 import WebSocket from 'ws';
+import {
+  EDanmakuEventName,
+  IDanmaku,
+  IGift,
+  IWelcome,
+} from 'common/types/danmaku';
+import { Danmaku } from './entity/danmaku';
 
 const chatUrl = 'wss://broadcastlv.chat.bilibili.com:2245/sub';
 
@@ -10,8 +26,9 @@ export interface DanmakuClientOptions {
   secret: string;
   roomId: number;
 }
+
 class WebSocketClient {
-  constructor(public roomInfo: RoomInfo) {}
+  constructor(public roomInfo: RoomInfo, private eventEmitter: EventEmitter) {}
 
   start() {
     const ws = new WebSocket(chatUrl);
@@ -30,23 +47,34 @@ class WebSocketClient {
         case EPacketType.POPULARITY:
           const count = (packet.body as PopularityBody).count;
           console.log(`人气：${count}`);
+          this.eventEmitter.emit(EDanmakuEventName.POPULARITY, count);
           break;
         case EPacketType.COMMAND:
           (packet.body as any[]).forEach((body) => {
             console.log(body);
             switch (body.cmd) {
-              case 'DANMU_MSG':
-                console.log(`${body.info[2][1]}: ${body.info[1]}`);
+              case ENotificationType.DANMU_MSG:
+                const danmaku = new Danmaku(body.info);
+                console.log(danmaku.toString());
+                this.eventEmitter.emit(EDanmakuEventName.DANMAKU, danmaku);
                 break;
-              case 'SEND_GIFT':
+              case EGiftType.SEND_GIFT:
                 console.log(
                   `${body.data.uname} ${body.data.action} ${body.data.num} 个 ${body.data.giftName}`
                 );
+                this.eventEmitter.emit(EDanmakuEventName.GIFT, {
+                  username: body.data.uname,
+                  action: body.data.action,
+                  num: body.data.num,
+                  giftName: body.data.giftName,
+                } as IGift);
                 break;
-              case 'WELCOME':
+              case ENotificationType.WELCOME:
                 console.log(`欢迎 ${body.data.uname}`);
+                this.eventEmitter.emit(EDanmakuEventName.WELCOME, {
+                  username: body.data.uname,
+                } as IWelcome);
                 break;
-              // 此处省略很多其他通知类型
               default:
                 console.log(body);
             }
@@ -73,6 +101,8 @@ export class DanmakuClient {
   secret: string;
   roomId: number;
 
+  private eventEmitter = new EventEmitter();
+
   constructor(options: DanmakuClientOptions) {
     this.appKey = options.appKey;
     this.secret = options.secret;
@@ -86,7 +116,19 @@ export class DanmakuClient {
       `🚀 ~ file: danmaku.js:84 ~ DanmakuClient ~ start ~ roomInfo:`,
       roomInfo
     );
-    const client = new WebSocketClient(roomInfo);
+    const client = new WebSocketClient(roomInfo, this.eventEmitter);
     client.start();
+  }
+  async onPopularity(callback: (count: number) => void) {
+    this.eventEmitter.on(EDanmakuEventName.POPULARITY, callback);
+  }
+  async onDanmaku(callback: (danmaku: Danmaku) => void) {
+    this.eventEmitter.on(EDanmakuEventName.DANMAKU, callback);
+  }
+  async onGift(callback: (gift: IGift) => void) {
+    this.eventEmitter.on(EDanmakuEventName.GIFT, callback);
+  }
+  async onWelcome(callback: (welcome: IWelcome) => void) {
+    this.eventEmitter.on(EDanmakuEventName.WELCOME, callback);
   }
 }

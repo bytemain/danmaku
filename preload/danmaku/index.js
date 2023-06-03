@@ -39,3 +39,12 @@ ipcRenderer.on('main-world-ready', (e) => {
   );
   window.dispatchEvent(messageEvent);
 });
+
+ipcRenderer.on('danmaku-notification', (e, arg) => {
+  console.log(`🚀 ~ file: index.js:44 ~ ipcRenderer.on ~ arg:`, arg);
+  const messageEvent = new MessageEvent('danmaku-notification', {
+    data: arg,
+    source: parent,
+  });
+  window.dispatchEvent(messageEvent);
+});

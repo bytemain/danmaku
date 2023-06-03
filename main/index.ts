@@ -7,7 +7,9 @@ import {
 } from 'electron';
 import path from 'path';
 
-import { setup } from './bililive';
+import { DanmakuClient } from './bililive/live/danmaku';
+import { EDanmakuEventName } from 'common/types/danmaku';
+import { danmakuNotificationChannel } from 'common/ipc';
 
 require('update-electron-app')();
 
@@ -107,7 +109,37 @@ const createDanmakuWindow = (roomId) => {
     win.loadURL('http://localhost:5173/danmaku.html');
   }
   win.webContents.on('did-stop-loading', async () => {
-    await setup(roomId);
+    const danmakuClient = new DanmakuClient({
+      appKey: '',
+      secret: '',
+      roomId,
+    });
+
+    danmakuClient.onGift((gift) => {
+      win.webContents.send(danmakuNotificationChannel, {
+        type: EDanmakuEventName.GIFT,
+        gift,
+      });
+    });
+    danmakuClient.onDanmaku((danmaku) => {
+      win.webContents.send(danmakuNotificationChannel, {
+        type: EDanmakuEventName.DANMAKU,
+        danmaku: danmaku.toJSON(),
+      });
+    });
+    danmakuClient.onPopularity((count) => {
+      win.webContents.send(danmakuNotificationChannel, {
+        type: EDanmakuEventName.POPULARITY,
+        popularity: count,
+      });
+    });
+    danmakuClient.onWelcome((welcome) => {
+      win.webContents.send(danmakuNotificationChannel, {
+        type: EDanmakuEventName.WELCOME,
+        welcome,
+      });
+    });
+    await danmakuClient.start();
     win.webContents.send('main-world-ready');
   });
   win.webContents.openDevTools();
