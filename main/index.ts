@@ -1,3 +1,7 @@
+import updateElectron from 'update-electron-app';
+
+updateElectron();
+
 import {
   app,
   BrowserWindow,
@@ -11,10 +15,6 @@ import { DanmakuClient } from './bililive/live/danmaku';
 import { EDanmakuEventName } from 'common/types/danmaku';
 import { danmakuNotificationChannel } from 'common/ipc';
 import { Disposable } from 'common/disposable';
-
-require('update-electron-app')();
-
-ipcMain.handle('ping', () => 'pong');
 
 ipcMain.handle('get-owner-browser-window-id', (event) => {
   return BrowserWindow.fromWebContents(event.sender).id;
