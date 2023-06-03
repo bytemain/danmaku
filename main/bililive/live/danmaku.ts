@@ -1,4 +1,4 @@
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'eventemitter3';
 import { APIClient, RoomInfo } from './api';
 import {
   Packet,
@@ -18,6 +18,7 @@ import {
   IWelcome,
 } from 'common/types/danmaku';
 import { Danmaku } from './entity/danmaku';
+import { Disposable } from 'common/disposable';
 
 const chatUrl = 'wss://broadcastlv.chat.bilibili.com:2245/sub';
 
@@ -38,7 +39,6 @@ class WebSocketClient {
 
     ws.on('message', async (data) => {
       const packet = await decode(data);
-      console.log(packet);
       switch (packet.op) {
         case EPacketType.ENTER_ROOM:
           break;
@@ -51,7 +51,6 @@ class WebSocketClient {
           break;
         case EPacketType.COMMAND:
           (packet.body as any[]).forEach((body) => {
-            console.log(body);
             switch (body.cmd) {
               case ENotificationType.DANMU_MSG:
                 const danmaku = new Danmaku(body.info);
@@ -76,7 +75,6 @@ class WebSocketClient {
                 } as IWelcome);
                 break;
               default:
-                console.log(body);
             }
           });
           break;
@@ -97,19 +95,39 @@ class WebSocketClient {
 }
 
 export class DanmakuClient {
+  static #instanceMap = new Map<string, DanmakuClient>();
   appKey: string;
   secret: string;
   roomId: number;
 
+  #started = false;
+
   private eventEmitter = new EventEmitter();
 
-  constructor(options: DanmakuClientOptions) {
+  private constructor(options: DanmakuClientOptions) {
     this.appKey = options.appKey;
     this.secret = options.secret;
     this.roomId = options.roomId;
   }
 
+  static instance(roomId: string) {
+    if (this.#instanceMap.has(roomId)) {
+      return this.#instanceMap.get(roomId);
+    }
+
+    const client = new DanmakuClient({
+      appKey: '',
+      secret: '',
+      roomId: Number(roomId),
+    });
+    this.#instanceMap.set(roomId, client);
+    return client;
+  }
+
   async start() {
+    if (this.#started) {
+      return;
+    }
     const apiClient = new APIClient(this.appKey, this.secret);
     const roomInfo = await apiClient.initRoom(this.roomId);
     console.log(
@@ -118,17 +136,31 @@ export class DanmakuClient {
     );
     const client = new WebSocketClient(roomInfo, this.eventEmitter);
     client.start();
+    this.#started = true;
   }
-  async onPopularity(callback: (count: number) => void) {
+
+  onPopularity(callback: (count: number) => void) {
     this.eventEmitter.on(EDanmakuEventName.POPULARITY, callback);
+    return Disposable.create(() => {
+      this.eventEmitter.off(EDanmakuEventName.POPULARITY, callback);
+    });
   }
-  async onDanmaku(callback: (danmaku: Danmaku) => void) {
+  onDanmaku(callback: (danmaku: Danmaku) => void) {
     this.eventEmitter.on(EDanmakuEventName.DANMAKU, callback);
+    return Disposable.create(() => {
+      this.eventEmitter.off(EDanmakuEventName.DANMAKU, callback);
+    });
   }
-  async onGift(callback: (gift: IGift) => void) {
+  onGift(callback: (gift: IGift) => void) {
     this.eventEmitter.on(EDanmakuEventName.GIFT, callback);
+    return Disposable.create(() => {
+      this.eventEmitter.off(EDanmakuEventName.GIFT, callback);
+    });
   }
-  async onWelcome(callback: (welcome: IWelcome) => void) {
+  onWelcome(callback: (welcome: IWelcome) => void) {
     this.eventEmitter.on(EDanmakuEventName.WELCOME, callback);
+    return Disposable.create(() => {
+      this.eventEmitter.off(EDanmakuEventName.WELCOME, callback);
+    });
   }
 }

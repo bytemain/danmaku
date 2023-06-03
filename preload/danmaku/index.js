@@ -26,25 +26,20 @@ contextBridge.exposeInMainWorld('bililive', {
   },
 });
 
-ipcRenderer.on('main-world-ready', (e) => {
-  const messageEvent = new MessageEvent('message', {
-    data: {
-      type: 'main-world-ready',
-    },
-    source: parent,
-  });
-  console.log(
-    `🚀 ~ file: index.js:31 ~ ipcRenderer.on ~ messageEvent:`,
-    messageEvent
-  );
-  window.dispatchEvent(messageEvent);
-});
+ipcRenderer.invoke('get-owner-browser-window-id').then((id) => {
+  ipcRenderer.once('main-world-setup-channel' + id, (e) => {
+    console.log('main-world-setup-channel' + id);
+    console.log(`🚀 ~ file: index.js:41 ~ ipcRenderer.invoke ~ id:`, id);
 
-ipcRenderer.on('danmaku-notification', (e, arg) => {
-  console.log(`🚀 ~ file: index.js:44 ~ ipcRenderer.on ~ arg:`, arg);
-  const messageEvent = new MessageEvent('danmaku-notification', {
-    data: arg,
-    source: parent,
+    ipcRenderer.on('danmaku-notification' + id, (e, arg) => {
+      console.log(
+        `🚀 ~ file: index.js:35 ~ ipcRenderer.on ~ 'danmaku-notification' + id:`,
+        'danmaku-notification' + id
+      );
+      const messageEvent = new MessageEvent('danmaku-notification', {
+        data: arg,
+      });
+      window.dispatchEvent(messageEvent);
+    });
   });
-  window.dispatchEvent(messageEvent);
 });

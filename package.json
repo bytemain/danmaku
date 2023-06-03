@@ -29,6 +29,7 @@
     "@types/ws": "^8.5.4",
     "bufferutil": "^4.0.7",
     "electron-squirrel-startup": "^1.0.0",
+    "eventemitter3": "^5.0.1",
     "minimist": "^1.2.8",
     "undici": "^5.22.1",
     "update-electron-app": "^2.0.1",

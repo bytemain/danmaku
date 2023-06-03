@@ -41,7 +41,7 @@ export function App() {
     return () => {
       window.removeEventListener(danmakuNotificationChannel, eventListener);
     };
-  });
+  }, []);
   return (
     <div className='app-container'>
       <header className='header'>当前人气：{popularity}</header>
