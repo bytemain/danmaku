@@ -19,8 +19,8 @@ class WebSocketClient {
       Packet.EnterRoom(this.roomInfo).send(ws);
     });
 
-    ws.on('message', async (msgEvent) => {
-      const packet = await decode(msgEvent.data);
+    ws.on('message', async (data) => {
+      const packet = await decode(data);
       console.log(packet);
       switch (packet.op) {
         case EPacketType.ENTER_ROOM:
