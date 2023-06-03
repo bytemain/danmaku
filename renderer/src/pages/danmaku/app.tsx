@@ -17,9 +17,15 @@ import {
 } from '../../../../common/types/danmaku';
 import { useDynamicList } from 'ahooks';
 
+interface MessageItem {
+  key: string;
+  content: string;
+  icon?: string;
+}
+
 export function App() {
   const [popularity, setPopularity] = useState(0);
-  const danmakuList = useDynamicList<IDanmaku>([]);
+  const danmakuList = useDynamicList<MessageItem>([]);
 
   useEffect(() => {
     const eventListener = (event: Event) => {
@@ -29,11 +35,24 @@ export function App() {
         setPopularity(data.popularity);
       } else if (data.type === EDanmakuEventName.DANMAKU) {
         const danmaku = data.danmaku as IDanmaku;
-        danmakuList.push(danmaku);
+        danmakuList.push({
+          key: `${danmaku.username}: ${danmaku.content}` + Date.now(),
+          content: `${danmaku.username}: ${danmaku.content}`,
+        });
       } else if (data.type === EDanmakuEventName.GIFT) {
         const gift = data.gift as IGift;
+        danmakuList.push({
+          key:
+            `${gift.username} 赠送了 ${gift.num} 个 ${gift.giftName}` +
+            Date.now(),
+          content: `${gift.username} 赠送了 ${gift.num} 个 ${gift.giftName}`,
+        });
       } else if (data.type === EDanmakuEventName.WELCOME) {
         const welcome = data.welcome as IWelcome;
+        danmakuList.push({
+          key: `${welcome.username} 进入了直播间` + Date.now(),
+          content: `${welcome.username} 进入了直播间`,
+        });
       }
     };
 
@@ -47,11 +66,11 @@ export function App() {
       <header className='header'>当前人气：{popularity}</header>
       <div className='danmaku-container'>
         <List spacing={3}>
-          {danmakuList.list.map((danmaku) => {
+          {danmakuList.list.map((item) => {
             return (
-              <ListItem key={danmaku.content}>
+              <ListItem key={item.key}>
                 <ListIcon as={MdCheckCircle} color='green.500' />
-                {danmaku.username}: {danmaku.content}
+                {item.content}
               </ListItem>
             );
           })}

@@ -38,11 +38,19 @@ export enum ENotificationType {
    */
   DANMU_MSG = 'DANMU_MSG',
   /**
-   * 老爷进入房间
+   * 直播间广播
+   */
+  NOTICE_MSG = 'NOTICE_MSG',
+  /**
+   * 系统信息
+   */
+  SYS_MSG = 'SYS_MSG',
+  /**
+   * 房管进入房间
    */
   WELCOME_GUARD = 'WELCOME_GUARD',
   /**
-   * 舰长进入房间
+   * 进入特效
    */
   ENTRY_EFFECT = 'ENTRY_EFFECT',
   /**
@@ -57,6 +65,13 @@ export enum ENotificationType {
    * SC留言
    */
   SUPER_CHAT_MESSAGE = 'SUPER_CHAT_MESSAGE',
+
+  WATCHED_CHANGE = 'WATCHED_CHANGE',
+
+  /**
+   * 进入房间
+   */
+  INTERACT_WORD = 'INTERACT_WORD',
 }
 
 export enum EGiftType {

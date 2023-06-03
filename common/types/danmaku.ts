@@ -7,6 +7,8 @@ export interface IGift {
 
 export interface IWelcome {
   username: string;
+  uid: string;
+  type: string;
 }
 
 export interface IDanmaku {

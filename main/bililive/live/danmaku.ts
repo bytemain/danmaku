@@ -39,11 +39,11 @@ class WebSocketClient {
 
     ws.on('message', async (data) => {
       const packet = await decode(data);
+      console.log(
+        `🚀 ~ file: danmaku.ts:42 ~ WebSocketClient ~ ws.on ~ packet:`,
+        packet
+      );
       switch (packet.op) {
-        case EPacketType.ENTER_ROOM:
-          break;
-        case EPacketType.HEARTBEAT:
-          break;
         case EPacketType.POPULARITY:
           const count = (packet.body as PopularityBody).count;
           console.log(`人气：${count}`);
@@ -52,12 +52,17 @@ class WebSocketClient {
         case EPacketType.COMMAND:
           (packet.body as any[]).forEach((body) => {
             switch (body.cmd) {
-              case ENotificationType.DANMU_MSG:
+              case ENotificationType.DANMU_MSG: {
                 const danmaku = new Danmaku(body.info);
+                console.log(
+                  `🚀 ~ file: danmaku.ts:61 ~ WebSocketClient ~ body.info:`,
+                  body.info
+                );
                 console.log(danmaku.toString());
                 this.eventEmitter.emit(EDanmakuEventName.DANMAKU, danmaku);
                 break;
-              case EGiftType.SEND_GIFT:
+              }
+              case EGiftType.SEND_GIFT: {
                 console.log(
                   `${body.data.uname} ${body.data.action} ${body.data.num} 个 ${body.data.giftName}`
                 );
@@ -68,12 +73,25 @@ class WebSocketClient {
                   giftName: body.data.giftName,
                 } as IGift);
                 break;
-              case ENotificationType.WELCOME:
+              }
+              case ENotificationType.WELCOME: {
                 console.log(`欢迎 ${body.data.uname}`);
                 this.eventEmitter.emit(EDanmakuEventName.WELCOME, {
                   username: body.data.uname,
+                  uid: body.data.uid,
+                  type: ENotificationType.WELCOME,
                 } as IWelcome);
                 break;
+              }
+              case ENotificationType.INTERACT_WORD: {
+                console.log(`欢迎 ${body.data.uname}`);
+                this.eventEmitter.emit(EDanmakuEventName.WELCOME, {
+                  username: body.data.uname,
+                  uid: body.data.uid,
+                  type: ENotificationType.INTERACT_WORD,
+                } as IWelcome);
+                break;
+              }
               default:
             }
           });
