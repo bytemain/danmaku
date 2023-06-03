@@ -6,6 +6,6 @@ export interface IMainWorld {
     ping: () => Promise<string>;
   };
   danmaku: {
-    open: () => void;
+    open: (roomId: string) => void;
   };
 }

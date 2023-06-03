@@ -1,12 +1,13 @@
 const { app, BrowserWindow, ipcMain, Menu } = require('electron/main');
 const path = require('path');
+const { setup } = require('./bililive');
 
 require('update-electron-app')();
 
 ipcMain.handle('ping', () => 'pong');
 
-ipcMain.handle('open-danmaku', () => {
-  createDanmakuWindow();
+ipcMain.handle('open-danmaku', (event, roomId) => {
+  createDanmakuWindow(roomId);
 });
 
 ipcMain.handle('danmaku-menu', (event) => {
@@ -77,7 +78,7 @@ const createWindow = () => {
   }
 };
 
-const createDanmakuWindow = () => {
+const createDanmakuWindow = (roomId) => {
   const win = new BrowserWindow({
     width: 800,
     height: 600,
@@ -93,6 +94,7 @@ const createDanmakuWindow = () => {
     // transparent: true,
     webPreferences: {
       preload: path.join(__dirname, '../preload/danmaku/index.js'),
+      additionalArguments: ['--roomId=' + roomId],
     },
   });
 
@@ -101,6 +103,10 @@ const createDanmakuWindow = () => {
   } else {
     win.loadURL('http://localhost:5173/danmaku.html');
   }
+  win.webContents.on('did-stop-loading', async () => {
+    await setup(roomId);
+    win.webContents.send('main-world-ready');
+  });
   win.webContents.openDevTools();
 };
 
