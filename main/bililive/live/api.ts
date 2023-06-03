@@ -1,4 +1,4 @@
-const md5 = require('../../utils/crypto/md5');
+import md5 from '../../utils/crypto/md5';
 
 const apiUrl = 'https://api.live.bilibili.com';
 
@@ -26,14 +26,19 @@ const getCommonQuery = (appKey) => ({
   platform: 'android',
 });
 
-class RoomInfo {
+export class RoomInfo {
+  roomId: string;
+  userId: string;
   constructor(data) {
     this.roomId = data.data.room_id;
     this.userId = data.data.uid;
   }
 }
 
-class APIClient {
+export class APIClient {
+  appKey: any;
+  secretKey: any;
+  initTime: number;
   constructor(appKey, secret) {
     this.appKey = appKey;
     this.secretKey = secret;
@@ -47,7 +52,7 @@ class APIClient {
       id: roomId,
       ts: this.initTime + '',
       ...getCommonQuery(this.appKey),
-    };
+    } as Record<string, string>;
     query.sign = this.#sign(query);
     const result = await this.#call(apiRoute.roomInit, query);
     if (result.code !== 0) {
@@ -65,7 +70,7 @@ class APIClient {
     return md5(str + this.secretKey);
   }
 
-  async #call(route, query, headers) {
+  async #call(route, query, headers?: Record<string, string>) {
     const url = new URL(apiUrl + route);
     Object.keys(query).forEach((key) =>
       url.searchParams.append(key, query[key])
@@ -80,8 +85,3 @@ class APIClient {
     return await res.json();
   }
 }
-
-module.exports = {
-  APIClient,
-  RoomInfo,
-};

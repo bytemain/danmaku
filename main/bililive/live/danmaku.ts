@@ -1,17 +1,17 @@
-const { APIClient } = require('./api');
-const { Packet, decode, encode, EPacketType } = require('./packet');
+import { APIClient, RoomInfo } from './api';
+import { Packet, decode, encode, EPacketType, PopularityBody } from './packet';
 
-const WebSocket = require('ws');
+import WebSocket from 'ws';
 
 const chatUrl = 'wss://broadcastlv.chat.bilibili.com:2245/sub';
 
+export interface DanmakuClientOptions {
+  appKey: string;
+  secret: string;
+  roomId: number;
+}
 class WebSocketClient {
-  /**
-   * @param {import('./api').RoomInfo} roomInfo
-   */
-  constructor(roomInfo) {
-    this.roomInfo = roomInfo;
-  }
+  constructor(public roomInfo: RoomInfo) {}
 
   start() {
     const ws = new WebSocket(chatUrl);
@@ -28,11 +28,11 @@ class WebSocketClient {
         case EPacketType.HEARTBEAT:
           break;
         case EPacketType.POPULARITY:
-          const count = packet.body.count;
+          const count = (packet.body as PopularityBody).count;
           console.log(`人气：${count}`);
           break;
         case EPacketType.COMMAND:
-          packet.body.forEach((body) => {
+          (packet.body as any[]).forEach((body) => {
             console.log(body);
             switch (body.cmd) {
               case 'DANMU_MSG':
@@ -68,11 +68,12 @@ class WebSocketClient {
   }
 }
 
-class DanmakuClient {
-  /**
-   * @param {import('./danmaku').DanmakuClientOptions} options
-   */
-  constructor(options) {
+export class DanmakuClient {
+  appKey: string;
+  secret: string;
+  roomId: number;
+
+  constructor(options: DanmakuClientOptions) {
     this.appKey = options.appKey;
     this.secret = options.secret;
     this.roomId = options.roomId;
@@ -89,7 +90,3 @@ class DanmakuClient {
     client.start();
   }
 }
-
-module.exports = {
-  DanmakuClient,
-};

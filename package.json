@@ -1,11 +1,13 @@
 {
   "name": "danmaku",
   "version": "1.0.0",
-  "main": "main/index.js",
+  "main": "dist/main.js",
   "license": "MIT",
   "private": true,
   "scripts": {
     "start": "electron-forge start",
+    "build": "vite build",
+    "watch": "vite build -w --mode development",
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
@@ -21,10 +23,14 @@
     "electron": "^24.3.1"
   },
   "dependencies": {
+    "@types/ws": "^8.5.4",
+    "bufferutil": "^4.0.7",
     "electron-squirrel-startup": "^1.0.0",
     "minimist": "^1.2.8",
     "undici": "^5.22.1",
     "update-electron-app": "^2.0.1",
+    "utf-8-validate": "^6.0.3",
+    "vite": "^4.3.9",
     "ws": "^8.13.0"
   },
   "repository": {

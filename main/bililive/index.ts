@@ -1,14 +1,10 @@
-const { DanmakuClient } = require('./live/danmaku');
+import { DanmakuClient } from './live/danmaku';
 
-const setup = async (roomId) => {
+export const setup = async (roomId) => {
   const danmakuClient = new DanmakuClient({
     appKey: '',
     secret: '',
     roomId,
   });
   await danmakuClient.start();
-};
-
-module.exports = {
-  setup,
 };

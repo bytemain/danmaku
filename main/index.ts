@@ -1,6 +1,13 @@
-const { app, BrowserWindow, ipcMain, Menu } = require('electron/main');
-const path = require('path');
-const { setup } = require('./bililive');
+import {
+  app,
+  BrowserWindow,
+  ipcMain,
+  Menu,
+  MenuItemConstructorOptions,
+} from 'electron';
+import path from 'path';
+
+import { setup } from './bililive';
 
 require('update-electron-app')();
 
@@ -23,10 +30,7 @@ ipcMain.handle('danmaku-menu', (event) => {
     currentTransparency = Math.floor(opacity * 100);
   }
 
-  /**
-   * @type {Electron.MenuItemConstructorOptions[]}
-   */
-  const transparencyMenu = [];
+  const transparencyMenu = [] as Electron.MenuItemConstructorOptions[];
 
   for (let i = transparencyMin; i <= transparencyMax; i += transparencyStep) {
     transparencyMenu.push({
@@ -40,9 +44,6 @@ ipcMain.handle('danmaku-menu', (event) => {
     });
   }
 
-  /**
-   * @type {Electron.MenuItemConstructorOptions[]}
-   */
   const template = [
     {
       label: 'Transparency',
@@ -57,9 +58,11 @@ ipcMain.handle('danmaku-menu', (event) => {
         if (win) win.close();
       },
     },
-  ];
+  ] as MenuItemConstructorOptions[];
   const menu = Menu.buildFromTemplate(template);
-  menu.popup(BrowserWindow.fromWebContents(event.sender));
+  menu.popup({
+    window: BrowserWindow.fromWebContents(event.sender),
+  });
 });
 
 const createWindow = () => {
