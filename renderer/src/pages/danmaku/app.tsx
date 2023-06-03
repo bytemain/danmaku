@@ -1,13 +1,7 @@
 import './app.css';
 import { useEffect, useState } from 'react';
-import {
-  List,
-  ListItem,
-  ListIcon,
-  OrderedList,
-  UnorderedList,
-} from '@chakra-ui/react';
-import { MdSettings, MdCheckCircle } from 'react-icons/md';
+import { List, ListItem, ListIcon } from '@chakra-ui/react';
+import { MdCheckCircle } from 'react-icons/md';
 import { danmakuNotificationChannel } from '../../../../common/ipc';
 import {
   IDanmaku,
