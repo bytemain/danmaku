@@ -11,7 +11,7 @@
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
-    "renderer:dev": "yarn --cwd renderer dev"
+    "renderer:dev": "yarn workspace renderer-react dev"
   },
   "devDependencies": {
     "@electron-forge/cli": "^6.1.1",
