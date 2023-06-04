@@ -8,36 +8,6 @@ export interface IDanmaku {
   levelColor: number;
 }
 
-/**
- * [
-    [
-      0,             1,
-      25,            16772431,
-      1685811008135, 1685810729,
-      0,             '1cc0812a',
-      0,             0,
-      0,             '',
-      0,             '{}',
-      '{}',          [Object],
-      [Object]
-    ],
-    '333',
-    [ Redacted, 'Bilibili直播姬', 0, 0, 0, 10000, 1, '' ],
-    [],
-    [ 22, 0, 5805790, '>50000', 0 ],
-    [ '', '' ],
-    0,
-    0,
-    null,
-    { ts: 1685811008, ct: '5C425267' },
-    0,
-    0,
-    null,
-    null,
-    0,
-    210
-  ]
- */
 export class Danmaku {
   username: string;
   uid: number;

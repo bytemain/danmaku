@@ -57,10 +57,6 @@ class WebSocketClient {
               }
               case ENotificationType.DANMU_MSG: {
                 const danmaku = new Danmaku(body.info);
-                console.log(
-                  `🚀 ~ file: danmaku.ts:61 ~ WebSocketClient ~ body.info:`,
-                  body.info
-                );
                 console.log(danmaku.toString());
                 this.eventEmitter.emit(EMessageEventType.COMMAND, {
                   name: ENotificationType.DANMU_MSG,
@@ -70,7 +66,11 @@ class WebSocketClient {
               }
               case ENotificationType.SEND_GIFT: {
                 const gift = new Gift(body.data);
-                console.log(gift.toString());
+                console.log(
+                  `🚀 ~ file: danmaku.ts:69 ~ WebSocketClient ~ body.data:`,
+                  body.data
+                );
+
                 this.eventEmitter.emit(EMessageEventType.COMMAND, {
                   name: ENotificationType.SEND_GIFT,
                   data: gift,
@@ -162,10 +162,7 @@ export class DanmakuClient {
 
     const apiClient = new APIClient(this.appKey, this.secret);
     const roomInfo = await apiClient.initRoom(this.roomId);
-    console.log(
-      `🚀 ~ file: danmaku.js:84 ~ DanmakuClient ~ start ~ roomInfo:`,
-      roomInfo
-    );
+    console.log(`connect to room`, roomInfo);
     const client = new WebSocketClient(roomInfo, this.hostEventEmitter);
     client.start();
   }

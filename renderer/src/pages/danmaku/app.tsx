@@ -24,6 +24,8 @@ interface MessageItem {
 
 export function App() {
   const [popularity, setPopularity] = useState(0);
+  const [leftBottomOverlayVisible, setLeftBottomOverlayVisible] =
+    useState(false);
   const danmakuList = useDynamicList<MessageItem>([]);
   const { colorMode, toggleColorMode } = useColorMode();
   const renderBadge = (danmaku: IDanmaku) => {
@@ -67,31 +69,32 @@ export function App() {
     );
   };
 
-  const renderLevel = (danmaku: IDanmaku) => {
-    const color = `#${danmaku.levelColor.toString(16)}`;
+  // const renderLevel = (danmaku: IDanmaku) => {
+  //   const color = `#${danmaku.levelColor.toString(16)}`;
 
-    return (
-      <Box
-        as='span'
-        className='level'
-        color={color}
-        borderColor={color}
-        padding={'0 0.2em'}
-        borderRadius={'0.1em'}
-        borderStyle={'solid'}
-        borderWidth={'1px'}
-        marginRight={'0.5em'}
-      >
-        UL {danmaku.level}
-      </Box>
-    );
-  };
+  //   return (
+  //     <Box
+  //       as='span'
+  //       className='level'
+  //       color={color}
+  //       borderColor={color}
+  //       padding={'0 0.2em'}
+  //       borderRadius={'0.1em'}
+  //       borderStyle={'solid'}
+  //       borderWidth={'1px'}
+  //       marginRight={'0.5em'}
+  //     >
+  //       UL {danmaku.level}
+  //     </Box>
+  //   );
+  // };
 
   const renderDanmaku = (danmaku: IDanmaku) => {
     return (
       <Box>
         {renderBadge(danmaku)}
-        {renderLevel(danmaku)}
+        {/* 官方都已经不显示 level 了，这里也不显示了 */}
+        {/* {renderLevel(danmaku)} */}
         <Box as='span' className='username'>
           {danmaku.username}
         </Box>
@@ -125,6 +128,7 @@ export function App() {
           });
         } else if (name === ENotificationType.SEND_GIFT) {
           const gift = data as IGift;
+          console.log(`🚀 ~ file: app.tsx:131 ~ eventListener ~ gift:`, gift);
           danmakuList.push({
             key:
               `${gift.username} 赠送了 ${gift.num} 个 ${gift.giftName}` +
@@ -150,22 +154,47 @@ export function App() {
     };
   }, []);
   return (
-    <div className='app-container'>
-      <header className='header'>当前人气：{popularity}</header>
-      <div className='danmaku-container'>
+    <Box className='app-container'>
+      <Box className='header'>当前人气：{popularity}</Box>
+      <Box className='danmaku-container'>
         <List spacing={3}>
           {danmakuList.list.map((item) => {
             return <ListItem key={item.key}>{item.content}</ListItem>;
           })}
         </List>
-      </div>
-      <Box position={'fixed'} left={5} bottom={5}>
-        {colorMode === 'light' ? (
-          <MoonIcon boxSize={6} onClick={toggleColorMode}></MoonIcon>
-        ) : (
-          <SunIcon boxSize={6} onClick={toggleColorMode}></SunIcon>
-        )}
       </Box>
-    </div>
+      <Box
+        position={'fixed'}
+        left={5}
+        bottom={5}
+        padding={'0.5em'}
+        onMouseOver={() => {
+          setLeftBottomOverlayVisible(true);
+        }}
+        onMouseLeave={() => {
+          setLeftBottomOverlayVisible(false);
+        }}
+      >
+        <Box visibility={leftBottomOverlayVisible ? 'visible' : 'hidden'}>
+          {colorMode === 'light' ? (
+            <MoonIcon
+              _hover={{
+                cursor: 'pointer',
+              }}
+              boxSize={6}
+              onClick={toggleColorMode}
+            ></MoonIcon>
+          ) : (
+            <SunIcon
+              _hover={{
+                cursor: 'pointer',
+              }}
+              boxSize={6}
+              onClick={toggleColorMode}
+            ></SunIcon>
+          )}
+        </Box>
+      </Box>
+    </Box>
   );
 }
