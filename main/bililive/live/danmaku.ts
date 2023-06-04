@@ -1,14 +1,7 @@
 import { EventEmitter } from 'eventemitter3';
 
 import { APIClient, RoomInfo } from './api';
-import {
-  Packet,
-  decode,
-  EPacketType,
-  PopularityBody,
-  ENotificationType,
-  EGiftType,
-} from './packet';
+import { Packet, decode } from './packet';
 
 import WebSocket from 'ws';
 import { EDanmakuEventName, IGift, IWelcome } from 'common/types/danmaku';
@@ -16,6 +9,8 @@ import { Danmaku } from './entity/danmaku';
 import { Disposable } from 'common/disposable';
 import { LimitedArray } from './utils';
 import { Popularity } from './entity/popularity';
+import { ENotificationType, EPacketType } from './types/packet';
+import { IWatchedChange } from './entity/watchedChange';
 
 const chatUrl = 'wss://broadcastlv.chat.bilibili.com:2245/sub';
 
@@ -42,7 +37,7 @@ class WebSocketClient {
       );
       switch (packet.op) {
         case EPacketType.POPULARITY: {
-          const popularity = new Popularity(packet.body as PopularityBody);
+          const popularity = new Popularity(packet.body);
           console.log(popularity.toString());
           this.eventEmitter.emit(EDanmakuEventName.POPULARITY, popularity);
           break;
@@ -50,6 +45,14 @@ class WebSocketClient {
         case EPacketType.COMMAND:
           (packet.body as any[]).forEach((body) => {
             switch (body.cmd) {
+              case ENotificationType.WATCHED_CHANGE: {
+                const data = body.data as IWatchedChange;
+                console.log(
+                  `🚀 ~ file: danmaku.ts:55 ~ WebSocketClient ~ data:`,
+                  data
+                );
+                break;
+              }
               case ENotificationType.DANMU_MSG: {
                 const danmaku = new Danmaku(body.info);
                 console.log(
@@ -60,7 +63,7 @@ class WebSocketClient {
                 this.eventEmitter.emit(EDanmakuEventName.DANMAKU, danmaku);
                 break;
               }
-              case EGiftType.SEND_GIFT: {
+              case ENotificationType.SEND_GIFT: {
                 console.log(
                   `${body.data.uname} ${body.data.action} ${body.data.num} 个 ${body.data.giftName}`
                 );

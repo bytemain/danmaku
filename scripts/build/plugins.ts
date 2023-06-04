@@ -98,6 +98,7 @@ export function buildStat(): Plugin {
     setup(build) {
       build.onEnd(async (result) => {
         const messages = [] as string[];
+
         messages.push(`[${new Date().toISOString()}] `);
 
         const outputs = result.metafile.outputs;
@@ -107,7 +108,7 @@ export function buildStat(): Plugin {
           );
         });
 
-        console.log('\n\n' + messages.join('\n'));
+        console.log('\n' + messages.join('\n'));
       });
     },
   };

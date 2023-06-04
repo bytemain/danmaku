@@ -14,13 +14,47 @@ import { useDynamicList } from 'ahooks';
 
 interface MessageItem {
   key: string;
-  content: string;
+  content: string | React.ReactElement;
   icon?: string;
 }
 
 export function App() {
   const [popularity, setPopularity] = useState(0);
   const danmakuList = useDynamicList<MessageItem>([]);
+
+  const renderBadge = (danmaku: IDanmaku) => {
+    if (!danmaku.medal) {
+      return null;
+    }
+    if (Object.keys(danmaku.medal).length === 0) {
+      return null;
+    }
+    const color = `#${danmaku.medal.color.toString(16)}`;
+    return (
+      <span className='badge'>
+        <span
+          className='badge-name'
+          style={{
+            borderColor: color,
+            backgroundColor: color,
+          }}
+        >
+          {danmaku.medal.name}
+        </span>
+      </span>
+    );
+  };
+
+  const renderDanmaku = (danmaku: IDanmaku) => {
+    return (
+      <div>
+        <ListIcon as={MdCheckCircle} color='green.500' />
+        {renderBadge(danmaku)}
+        <span className='username'>{danmaku.username}</span>:
+        <span className='content'>{danmaku.content}</span>
+      </div>
+    );
+  };
 
   useEffect(() => {
     const eventListener = (event: Event) => {
@@ -32,7 +66,7 @@ export function App() {
         const danmaku = data.danmaku as IDanmaku;
         danmakuList.push({
           key: `${danmaku.username}: ${danmaku.content}` + danmaku.createdAt,
-          content: `${danmaku.username}: ${danmaku.content}`,
+          content: renderDanmaku(danmaku),
         });
       } else if (data.type === EDanmakuEventName.GIFT) {
         const gift = data.gift as IGift;
@@ -62,12 +96,7 @@ export function App() {
       <div className='danmaku-container'>
         <List spacing={3}>
           {danmakuList.list.map((item) => {
-            return (
-              <ListItem key={item.key}>
-                <ListIcon as={MdCheckCircle} color='green.500' />
-                {item.content}
-              </ListItem>
-            );
+            return <ListItem key={item.key}>{item.content}</ListItem>;
           })}
         </List>
       </div>

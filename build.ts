@@ -5,6 +5,14 @@ import { resolve } from 'path';
 import { builtinModules } from 'node:module';
 import { buildStat, cleanup } from 'scripts/build/plugins';
 
+const argv = mri(process.argv.slice(2));
+
+const define = {
+  'process.env.NODE_ENV': JSON.stringify(
+    argv.watch ? 'development' : 'production'
+  ),
+} as Record<string, string>;
+
 export const buildParams = {
   minify: false,
   color: true,
@@ -15,36 +23,20 @@ export const buildParams = {
   bundle: true,
   outdir: 'dist',
   outbase: '.',
-  logLevel: 'debug',
+  logLevel: 'info',
   metafile: true,
   external: ['electron', ...builtinModules.flatMap((m) => [m, `node:${m}`])],
+  define,
+  plugins: [buildStat()].filter(Boolean),
 } as BuildOptions;
 
-const argv = mri(process.argv.slice(2));
-
-const define = {
-  'process.env.NODE_ENV': JSON.stringify(
-    argv.watch ? 'development' : 'production'
-  ),
-} as Record<string, string>;
-
-const preloadScripts = {
-  index: 'preload/index.ts',
-  danmaku: 'preload/danmaku/index.ts',
-};
-
-async function buildNode() {
+async function buildMain() {
   const context = await createContext({
     ...buildParams,
-    entryPoints: [
-      resolve(__dirname, 'main/index.ts'),
-      ...Object.values(preloadScripts).map((v) => resolve(__dirname, v)),
-    ],
+    entryPoints: [resolve(__dirname, 'main/index.ts')],
     platform: 'node',
     target: 'node18',
     format: 'cjs',
-    define,
-    plugins: [cleanup(), buildStat()].filter(Boolean),
   });
 
   if (argv['watch']) {
@@ -54,9 +46,32 @@ async function buildNode() {
     context.dispose();
   }
 }
+async function buildPreload() {
+  const preloadScripts = {
+    index: 'preload/index.ts',
+    danmaku: 'preload/danmaku/index.ts',
+  };
+
+  const context = await createContext({
+    ...buildParams,
+    entryPoints: [
+      ...Object.values(preloadScripts).map((v) => resolve(__dirname, v)),
+    ],
+    platform: 'node',
+    target: 'node18',
+    format: 'iife',
+  });
+
+  if (argv['watch']) {
+    context.watch();
+  } else {
+    await context.rebuild();
+    context.dispose();
+  }
+}
 
 async function main() {
-  await buildNode();
+  await Promise.all([buildMain(), buildPreload()]);
 }
 
 main();

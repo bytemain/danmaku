@@ -32,8 +32,9 @@ import { IDanmaku } from 'common/types/danmaku';
  */
 export class Danmaku {
   username: string;
+  uid: number;
   content: string;
-  medal: { name: string; level: string; color: string };
+  medal: { name: string; level: string; color: number };
   level: string;
   levelColor: string;
 
@@ -41,6 +42,7 @@ export class Danmaku {
 
   constructor(info: any) {
     this.createdAt = info[0][4];
+    this.uid = info[2][0];
     this.username = info[2][1];
     this.content = info[1];
 
@@ -49,8 +51,8 @@ export class Danmaku {
     this.medal = {} as any;
     if (info[3].length > 0) {
       this.medal = {
-        name: info[3][1],
         level: info[3][0],
+        name: info[3][1],
         color: info[3][2],
       };
     }
@@ -64,6 +66,7 @@ export class Danmaku {
     return {
       createdAt: this.createdAt,
       username: this.username,
+      uid: this.uid,
       content: this.content,
       medal: this.medal,
       level: this.level,

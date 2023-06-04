@@ -19,7 +19,7 @@ export class Disposable implements IDisposable {
     this.#disposables.push(disposable);
     return {
       dispose: () => {
-        var i = this.#disposables.indexOf(disposable);
+        const i = this.#disposables.indexOf(disposable);
         if (i > -1) this.#disposables.splice(i, 1);
       },
     };
