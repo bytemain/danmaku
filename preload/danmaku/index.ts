@@ -1,20 +1,23 @@
-const { contextBridge, ipcRenderer } = require('electron/renderer');
+import { contextBridge, ipcRenderer } from 'electron/renderer';
 
-const argv = {};
+import mri from 'mri';
 
-process.argv.forEach((arg) => {
-  if (arg.startsWith('--roomId=')) {
-    argv.roomId = arg.slice('--roomId='.length);
-  }
-});
+const argv = mri(process.argv.slice(2)) as mri.Argv<{
+  roomId: string;
+}>;
 
-contextBridge.exposeInMainWorld(
-  'operation',
-  /** @type {import('./index').IMainWorld['operation']} */
-  ({
-    rightClick: async () => await ipcRenderer.invoke('danmaku-menu'),
-  })
-);
+export interface IMainWorld {
+  operation: {
+    rightClick: () => void;
+  };
+  env: {
+    roomId: string;
+  };
+}
+
+contextBridge.exposeInMainWorld('operation', {
+  rightClick: async () => await ipcRenderer.invoke('danmaku-menu'),
+} as IMainWorld['operation']);
 
 contextBridge.exposeInMainWorld('env', {
   roomId: argv.roomId,

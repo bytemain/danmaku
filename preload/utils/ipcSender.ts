@@ -1,6 +1,4 @@
-'use strict';
-
-const { contextBridge, ipcRenderer } = require('electron');
+import { contextBridge, ipcRenderer } from 'electron';
 
 // White-listed channels.
 const defaultOptions = {
@@ -23,14 +21,14 @@ const setupIpcSender = (_config) => {
     {
       // From render to main.
       send: (channel, args) => {
-        let validChannels = ipc.render.send;
+        const validChannels = ipc.render.send;
         if (validChannels.includes(channel)) {
           ipcRenderer.send(channel, args);
         }
       },
       // From main to render.
       receive: (channel, listener) => {
-        let validChannels = ipc.render.receive;
+        const validChannels = ipc.render.receive;
         if (validChannels.includes(channel)) {
           // Deliberately strip event as it includes `sender`.
           ipcRenderer.on(channel, (event, ...args) => listener(...args));
@@ -38,7 +36,7 @@ const setupIpcSender = (_config) => {
       },
       // From render to main and back again.
       invoke: (channel, args) => {
-        let validChannels = ipc.render.sendReceive;
+        const validChannels = ipc.render.sendReceive;
         if (validChannels.includes(channel)) {
           return ipcRenderer.invoke(channel, args);
         }
@@ -47,6 +45,6 @@ const setupIpcSender = (_config) => {
   );
 };
 
-module.exports = {
+export default {
   setupIpcSender,
 };

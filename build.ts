@@ -116,22 +116,24 @@ const define = {
   ),
 } as Record<string, string>;
 
+const preloadScripts = {
+  index: 'preload/index.ts',
+  danmaku: 'preload/danmaku/index.ts',
+};
+
 async function buildNode() {
   const context = await createContext({
     ...buildParams,
-    entryPoints: [resolve(__dirname, 'main/index.ts')],
+    entryPoints: [
+      resolve(__dirname, 'main/index.ts'),
+      ...Object.values(preloadScripts).map((v) => resolve(__dirname, v)),
+    ],
     platform: 'node',
     target: 'node18',
     format: 'cjs',
     define,
     metafile: true,
-    plugins: [
-      cleanup(undefined),
-      copyResources({
-        from: resolve(__dirname, 'preload'),
-        to: 'preload',
-      }),
-    ],
+    plugins: [cleanup(undefined)],
   });
 
   if (argv['watch']) {
