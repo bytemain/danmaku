@@ -31,12 +31,12 @@ ipcMain.handle('open-danmaku', (event, roomId) => {
   createDanmakuWindow(roomId);
 });
 
+let currentTransparency = 80;
+
 ipcMain.handle('danmaku-menu', (event) => {
   const transparencyStep = 10;
   const transparencyMax = 100;
   const transparencyMin = 20;
-
-  let currentTransparency = transparencyMax;
 
   const win = BrowserWindow.fromWebContents(event.sender);
   if (win) {
@@ -65,6 +65,22 @@ ipcMain.handle('danmaku-menu', (event) => {
       submenu: transparencyMenu,
     },
     { type: 'separator' },
+    {
+      label: 'Always on top',
+      type: 'checkbox',
+      checked: win ? win.isAlwaysOnTop() : false,
+      click: () => {
+        const win = BrowserWindow.fromWebContents(event.sender);
+        if (win) win.setAlwaysOnTop(!win.isAlwaysOnTop());
+      },
+    },
+    {
+      label: 'Reload',
+      click: () => {
+        const win = BrowserWindow.fromWebContents(event.sender);
+        if (win) win.reload();
+      },
+    },
     {
       label: 'Quit',
       click: () => {
@@ -108,11 +124,24 @@ const createDanmakuWindow = (roomId) => {
     maximizable: false,
     fullscreenable: false,
     resizable: true,
+    opacity: currentTransparency / 100,
     // transparent: true,
     webPreferences: {
       preload: path.join(__dirname, '../preload/danmaku/index.js'),
       additionalArguments: ['--roomId=' + roomId],
     },
+  });
+  win.on('blur', () => {
+    win.setIgnoreMouseEvents(true);
+  });
+  win.on('focus', () => {
+    win.setIgnoreMouseEvents(false);
+  });
+  win.on('resize', () => {
+    win.setIgnoreMouseEvents(false);
+  });
+  win.on('will-resize', () => {
+    win.setIgnoreMouseEvents(false);
   });
 
   if (process.env.NODE_ENV === 'production') {
