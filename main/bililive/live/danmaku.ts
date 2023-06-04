@@ -1,9 +1,9 @@
 import { EventEmitter } from 'eventemitter3';
+
 import { APIClient, RoomInfo } from './api';
 import {
   Packet,
   decode,
-  encode,
   EPacketType,
   PopularityBody,
   ENotificationType,
@@ -11,14 +11,11 @@ import {
 } from './packet';
 
 import WebSocket from 'ws';
-import {
-  EDanmakuEventName,
-  IDanmaku,
-  IGift,
-  IWelcome,
-} from 'common/types/danmaku';
+import { EDanmakuEventName, IGift, IWelcome } from 'common/types/danmaku';
 import { Danmaku } from './entity/danmaku';
 import { Disposable } from 'common/disposable';
+import { LimitedArray } from './utils';
+import { Popularity } from './entity/popularity';
 
 const chatUrl = 'wss://broadcastlv.chat.bilibili.com:2245/sub';
 
@@ -44,11 +41,12 @@ class WebSocketClient {
         packet
       );
       switch (packet.op) {
-        case EPacketType.POPULARITY:
-          const count = (packet.body as PopularityBody).count;
-          console.log(`人气：${count}`);
-          this.eventEmitter.emit(EDanmakuEventName.POPULARITY, count);
+        case EPacketType.POPULARITY: {
+          const popularity = new Popularity(packet.body as PopularityBody);
+          console.log(popularity.toString());
+          this.eventEmitter.emit(EDanmakuEventName.POPULARITY, popularity);
           break;
+        }
         case EPacketType.COMMAND:
           (packet.body as any[]).forEach((body) => {
             switch (body.cmd) {
@@ -119,8 +117,7 @@ export class DanmakuClient {
   roomId: number;
 
   #started = false;
-
-  private eventEmitter = new EventEmitter();
+  private hostEventEmitter = new HostEventListener();
 
   private constructor(options: DanmakuClientOptions) {
     this.appKey = options.appKey;
@@ -152,33 +149,82 @@ export class DanmakuClient {
       `🚀 ~ file: danmaku.js:84 ~ DanmakuClient ~ start ~ roomInfo:`,
       roomInfo
     );
-    const client = new WebSocketClient(roomInfo, this.eventEmitter);
+    const client = new WebSocketClient(roomInfo, this.hostEventEmitter);
     client.start();
     this.#started = true;
   }
 
-  onPopularity(callback: (count: number) => void) {
-    this.eventEmitter.on(EDanmakuEventName.POPULARITY, callback);
+  addEventEmitter(eventEmitter: EventEmitter) {
+    return this.hostEventEmitter.addAgent(eventEmitter);
+  }
+
+  replayEvent(eventEmitter: EventEmitter) {
+    this.hostEventEmitter.replay(eventEmitter);
+  }
+}
+
+class HostEventListener extends EventEmitter {
+  #agents = [] as EventEmitter[];
+  limitedArray = new LimitedArray(10);
+
+  addAgent(agent: EventEmitter) {
+    if (this.#agents.includes(agent)) {
+      console.log('agent already exists');
+      return Disposable.create(() => {
+        // do nothing
+      });
+    }
+
+    this.#agents.push(agent);
     return Disposable.create(() => {
-      this.eventEmitter.off(EDanmakuEventName.POPULARITY, callback);
+      const index = this.#agents.indexOf(agent);
+      if (index > -1) {
+        this.#agents.splice(index, 1);
+      }
+    });
+  }
+  emit(event: string | symbol, ...args: any[]) {
+    console.log(
+      `🚀 ~ file: danmaku.ts:188 ~ HostEventListener ~ emit ~ event:`,
+      event
+    );
+    this.limitedArray.push({ event, args });
+    this.#agents.forEach((agent) => {
+      agent.emit(event, ...args);
+    });
+    return true;
+  }
+
+  replay(eventEmitter: EventEmitter) {
+    this.limitedArray.forEach(({ event, args }) => {
+      eventEmitter.emit(event, ...args);
+    });
+  }
+}
+
+export class AgentEventListener extends EventEmitter {
+  onPopularity(callback: (popularity: Popularity) => void) {
+    this.on(EDanmakuEventName.POPULARITY, callback);
+    return Disposable.create(() => {
+      this.off(EDanmakuEventName.POPULARITY, callback);
     });
   }
   onDanmaku(callback: (danmaku: Danmaku) => void) {
-    this.eventEmitter.on(EDanmakuEventName.DANMAKU, callback);
+    this.on(EDanmakuEventName.DANMAKU, callback);
     return Disposable.create(() => {
-      this.eventEmitter.off(EDanmakuEventName.DANMAKU, callback);
+      this.off(EDanmakuEventName.DANMAKU, callback);
     });
   }
   onGift(callback: (gift: IGift) => void) {
-    this.eventEmitter.on(EDanmakuEventName.GIFT, callback);
+    this.on(EDanmakuEventName.GIFT, callback);
     return Disposable.create(() => {
-      this.eventEmitter.off(EDanmakuEventName.GIFT, callback);
+      this.off(EDanmakuEventName.GIFT, callback);
     });
   }
   onWelcome(callback: (welcome: IWelcome) => void) {
-    this.eventEmitter.on(EDanmakuEventName.WELCOME, callback);
+    this.on(EDanmakuEventName.WELCOME, callback);
     return Disposable.create(() => {
-      this.eventEmitter.off(EDanmakuEventName.WELCOME, callback);
+      this.off(EDanmakuEventName.WELCOME, callback);
     });
   }
 }

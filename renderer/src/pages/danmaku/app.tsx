@@ -8,6 +8,7 @@ import {
   IGift,
   IWelcome,
   EDanmakuEventName,
+  IPopularity,
 } from '../../../../common/types/danmaku';
 import { useDynamicList } from 'ahooks';
 
@@ -26,11 +27,11 @@ export function App() {
       const data = (event as MessageEvent).data;
       console.log(`🚀 ~ file: app.tsx:25 ~ eventListener ~ data:`, data);
       if (data.type === EDanmakuEventName.POPULARITY) {
-        setPopularity(data.popularity);
+        setPopularity((data.popularity as IPopularity).count);
       } else if (data.type === EDanmakuEventName.DANMAKU) {
         const danmaku = data.danmaku as IDanmaku;
         danmakuList.push({
-          key: `${danmaku.username}: ${danmaku.content}` + Date.now(),
+          key: `${danmaku.username}: ${danmaku.content}` + danmaku.createdAt,
           content: `${danmaku.username}: ${danmaku.content}`,
         });
       } else if (data.type === EDanmakuEventName.GIFT) {

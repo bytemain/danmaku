@@ -11,7 +11,7 @@ import {
 } from 'electron';
 import path from 'path';
 
-import { DanmakuClient } from './bililive/live/danmaku';
+import { AgentEventListener, DanmakuClient } from './bililive/live/danmaku';
 import { EDanmakuEventName } from 'common/types/danmaku';
 import { danmakuNotificationChannel } from 'common/ipc';
 import { Disposable } from 'common/disposable';
@@ -88,12 +88,6 @@ const createWindow = () => {
   }
 };
 
-const stopEvent = (value: any, cb: () => void) => {
-  if (!value) {
-    cb();
-  }
-};
-
 const createDanmakuWindow = (roomId) => {
   let win = new BrowserWindow({
     width: 800,
@@ -120,8 +114,9 @@ const createDanmakuWindow = (roomId) => {
     win.loadURL('http://localhost:5173/danmaku.html');
   }
 
-  let disposable = new Disposable();
+  const disposable = new Disposable();
   win.on('close', () => {
+    console.log('cleanup');
     // 移除所有的事件监听
     disposable.dispose();
   });
@@ -129,62 +124,65 @@ const createDanmakuWindow = (roomId) => {
     win = null;
   });
 
-  win.webContents.on('did-stop-loading', async () => {
+  win.webContents.once('did-stop-loading', async () => {
     const danmakuClient = DanmakuClient.instance(roomId);
 
+    const channelId = danmakuNotificationChannel + win.id;
+
+    const eventEmitter = new AgentEventListener();
+
+    disposable.add(danmakuClient.addEventEmitter(eventEmitter));
     disposable.add(
-      danmakuClient.onGift((gift) => {
+      eventEmitter.onGift((gift) => {
         if (!win) {
           disposable.dispose();
           return;
         }
-        win.webContents.send(danmakuNotificationChannel + win.id, {
+        win.webContents.send(channelId, {
           type: EDanmakuEventName.GIFT,
           gift,
         });
       })
     );
-    danmakuClient.onDanmaku((danmaku) => {
+    eventEmitter.onDanmaku((danmaku) => {
       if (!win) {
         disposable.dispose();
         return;
       }
 
-      console.log(
-        'danmakuNotificationChannel + win.id',
-        danmakuNotificationChannel + win.id
-      );
-      win.webContents.send(danmakuNotificationChannel + win.id, {
+      console.log('channelId', channelId);
+      win.webContents.send(channelId, {
         type: EDanmakuEventName.DANMAKU,
         danmaku: danmaku.toJSON(),
       });
     });
-    danmakuClient.onPopularity((count) => {
+    eventEmitter.onPopularity((popularity) => {
       if (!win) {
         disposable.dispose();
         return;
       }
 
-      console.log(
-        'danmakuNotificationChannel + win.id',
-        danmakuNotificationChannel + win.id
-      );
+      console.log('channelId', channelId);
 
-      win.webContents.send(danmakuNotificationChannel + win.id, {
+      win.webContents.send(channelId, {
         type: EDanmakuEventName.POPULARITY,
-        popularity: count,
+        popularity: popularity.toJSON(),
       });
     });
-    danmakuClient.onWelcome((welcome) => {
+    eventEmitter.onWelcome((welcome) => {
       if (!win) {
         disposable.dispose();
         return;
       }
 
-      win.webContents.send(danmakuNotificationChannel + win.id, {
+      win.webContents.send(channelId, {
         type: EDanmakuEventName.WELCOME,
         welcome,
       });
+    });
+
+    ipcMain.once('main-world-setup-channel-done' + win.id, () => {
+      danmakuClient.replayEvent(eventEmitter);
     });
 
     await danmakuClient.start();

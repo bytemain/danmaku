@@ -20,12 +20,6 @@ contextBridge.exposeInMainWorld('env', {
   roomId: argv.roomId,
 });
 
-contextBridge.exposeInMainWorld('bililive', {
-  onPopularity: (callback) => {
-    ipcRenderer.on('popularity', (event, arg) => callback(arg));
-  },
-});
-
 ipcRenderer.invoke('get-owner-browser-window-id').then((id) => {
   ipcRenderer.once('main-world-setup-channel' + id, (e) => {
     console.log('main-world-setup-channel' + id);
@@ -41,5 +35,7 @@ ipcRenderer.invoke('get-owner-browser-window-id').then((id) => {
       });
       window.dispatchEvent(messageEvent);
     });
+
+    ipcRenderer.send('main-world-setup-channel-done' + id, 'ok');
   });
 });

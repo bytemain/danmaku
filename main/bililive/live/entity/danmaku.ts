@@ -37,7 +37,10 @@ export class Danmaku {
   level: string;
   levelColor: string;
 
+  createdAt: number;
+
   constructor(info: any) {
+    this.createdAt = info[0][4];
     this.username = info[2][1];
     this.content = info[1];
 
@@ -59,6 +62,7 @@ export class Danmaku {
 
   toJSON(): IDanmaku {
     return {
+      createdAt: this.createdAt,
       username: this.username,
       content: this.content,
       medal: this.medal,

@@ -12,11 +12,16 @@ export interface IWelcome {
 }
 
 export interface IDanmaku {
+  createdAt: number;
   username: string;
   content: string;
   medal: { name: string; level: string; color: string };
   level: string;
   levelColor: string;
+}
+
+export interface IPopularity {
+  count: number;
 }
 
 export const enum EDanmakuEventName {
