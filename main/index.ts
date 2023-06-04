@@ -8,6 +8,7 @@ import {
   ipcMain,
   Menu,
   MenuItemConstructorOptions,
+  Tray,
 } from 'electron';
 import path from 'path';
 
@@ -82,7 +83,7 @@ ipcMain.handle('danmaku-menu', (event) => {
       },
     },
     {
-      label: 'Quit',
+      label: 'Close',
       click: () => {
         const win = BrowserWindow.fromWebContents(event.sender);
         if (win) win.close();
@@ -95,7 +96,7 @@ ipcMain.handle('danmaku-menu', (event) => {
   });
 });
 
-const createWindow = () => {
+const createMainWindow = () => {
   const win = new BrowserWindow({
     width: 800,
     height: 600,
@@ -109,6 +110,7 @@ const createWindow = () => {
   } else {
     win.loadURL('http://localhost:5173');
   }
+  return win;
 };
 
 const createDanmakuWindow = (roomId) => {
@@ -206,11 +208,35 @@ const createDanmakuWindow = (roomId) => {
   win.webContents.openDevTools();
 };
 
+let mainWindow: BrowserWindow | null = null;
+let tray: Tray | null = null;
+
 app.whenReady().then(() => {
-  createWindow();
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  mainWindow = createMainWindow();
+  mainWindow.on('closed', () => {
+    mainWindow = null;
   });
+
+  tray = new Tray('./assets/icons/png/24x24.png');
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: 'Open Main Window',
+      click: () => {
+        if (mainWindow) {
+          mainWindow.show();
+        } else {
+          mainWindow = createMainWindow();
+        }
+      },
+    },
+    { type: 'separator' },
+    {
+      label: 'Quit',
+      role: 'quit',
+    },
+  ]);
+  tray.setToolTip('Bililive');
+  tray.setContextMenu(contextMenu);
 });
 
 app.on('window-all-closed', () => {
