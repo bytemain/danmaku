@@ -203,7 +203,6 @@ const createDanmakuWindow = (roomId) => {
     });
 
     await danmakuClient.start();
-    win.webContents.send('main-world-setup-channel' + win.id);
   });
   win.webContents.openDevTools();
 };
@@ -213,7 +212,15 @@ let tray: Tray | null = null;
 
 app.whenReady().then(() => {
   mainWindow = createMainWindow();
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      mainWindow = createMainWindow();
+    }
+  });
   mainWindow.on('closed', () => {
+    mainWindow = null;
+  });
+  mainWindow.on('close', () => {
     mainWindow = null;
   });
 

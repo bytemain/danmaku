@@ -5,7 +5,7 @@ export interface IDanmaku {
   content: string;
   medal: { name: string; level: string; color: number };
   level: string;
-  levelColor: string;
+  levelColor: number;
 }
 
 /**
@@ -44,7 +44,7 @@ export class Danmaku {
   content: string;
   medal: { name: string; level: string; color: number };
   level: string;
-  levelColor: string;
+  levelColor: number;
 
   createdAt: number;
 

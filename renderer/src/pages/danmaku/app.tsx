@@ -1,7 +1,6 @@
 import './app.css';
 import { useEffect, useState } from 'react';
-import { List, ListItem, ListIcon } from '@chakra-ui/react';
-import { MdCheckCircle } from 'react-icons/md';
+import { List, ListItem, useColorMode, Box } from '@chakra-ui/react';
 import { danmakuNotificationChannel } from '@@common/ipc';
 import {
   EMessageEventType,
@@ -13,6 +12,7 @@ import {
   IPopularity,
   IDanmaku,
 } from '@@lib/bililive/common/entity';
+import { MoonIcon, SunIcon } from '@chakra-ui/icons';
 
 import { useDynamicList } from 'ahooks';
 
@@ -25,7 +25,7 @@ interface MessageItem {
 export function App() {
   const [popularity, setPopularity] = useState(0);
   const danmakuList = useDynamicList<MessageItem>([]);
-
+  const { colorMode, toggleColorMode } = useColorMode();
   const renderBadge = (danmaku: IDanmaku) => {
     if (!danmaku.medal) {
       return null;
@@ -35,28 +35,77 @@ export function App() {
     }
     const color = `#${danmaku.medal.color.toString(16)}`;
     return (
-      <span className='badge'>
-        <span
+      <Box as='span' className='badge' marginRight={'0.5em'}>
+        <Box
+          as='span'
           className='badge-name'
+          padding={'0 0.5em'}
+          borderRadius={'0.1em 0 0 0.1em'}
+          borderStyle={'solid'}
+          borderWidth={'1px'}
           style={{
             borderColor: color,
             backgroundColor: color,
           }}
         >
           {danmaku.medal.name}
-        </span>
-      </span>
+        </Box>
+        <Box
+          as='span'
+          style={{
+            borderColor: color,
+          }}
+          className='badge-level'
+          padding={'0 0.2em'}
+          borderRadius={' 0 0.1em 0.1em 0'}
+          borderStyle={'solid'}
+          borderWidth={'1px'}
+        >
+          {danmaku.medal.level}
+        </Box>
+      </Box>
+    );
+  };
+
+  const renderLevel = (danmaku: IDanmaku) => {
+    const color = `#${danmaku.levelColor.toString(16)}`;
+
+    return (
+      <Box
+        as='span'
+        className='level'
+        color={color}
+        borderColor={color}
+        padding={'0 0.2em'}
+        borderRadius={'0.1em'}
+        borderStyle={'solid'}
+        borderWidth={'1px'}
+        marginRight={'0.5em'}
+      >
+        UL {danmaku.level}
+      </Box>
     );
   };
 
   const renderDanmaku = (danmaku: IDanmaku) => {
     return (
-      <div>
-        <ListIcon as={MdCheckCircle} color='green.500' />
+      <Box>
         {renderBadge(danmaku)}
-        <span className='username'>{danmaku.username}</span>:
-        <span className='content'>{danmaku.content}</span>
-      </div>
+        {renderLevel(danmaku)}
+        <Box as='span' className='username'>
+          {danmaku.username}
+        </Box>
+        :
+        <Box
+          as='span'
+          className='content'
+          overflowWrap={'anywhere'}
+          wordBreak={'break-all'}
+          lineHeight={'1.5em'}
+        >
+          {danmaku.content}
+        </Box>
+      </Box>
     );
   };
 
@@ -110,6 +159,13 @@ export function App() {
           })}
         </List>
       </div>
+      <Box position={'fixed'} left={5} bottom={5}>
+        {colorMode === 'light' ? (
+          <MoonIcon boxSize={6} onClick={toggleColorMode}></MoonIcon>
+        ) : (
+          <SunIcon boxSize={6} onClick={toggleColorMode}></SunIcon>
+        )}
+      </Box>
     </div>
   );
 }
