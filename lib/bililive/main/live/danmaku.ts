@@ -24,6 +24,8 @@ class WebSocketClient {
   constructor(public roomInfo: RoomInfo, private eventEmitter: EventEmitter) {}
 
   start() {
+    console.log('websocket started');
+
     const ws = new WebSocket(chatUrl);
     ws.on('open', () => {
       Packet.EnterRoom(this.roomInfo).send(ws);
@@ -109,12 +111,15 @@ class WebSocketClient {
   }
   setupHeartbeat(ws) {
     setInterval(() => {
+      console.log('send heartbeat');
       Packet.Heartbeat().send(ws);
     }, 30 * 1000);
   }
 }
 
 export class DanmakuClient {
+  id: number;
+
   static #instanceMap = new Map<string, DanmakuClient>();
   appKey: string;
   secret: string;
@@ -123,7 +128,12 @@ export class DanmakuClient {
   #started = false;
   private hostEventEmitter = new HostEventListener();
 
+  static nextId = 0;
+  static getNextId() {
+    return this.nextId++;
+  }
   private constructor(options: DanmakuClientOptions) {
+    this.id = DanmakuClient.getNextId();
     this.appKey = options.appKey;
     this.secret = options.secret;
     this.roomId = options.roomId;
@@ -145,8 +155,11 @@ export class DanmakuClient {
 
   async start() {
     if (this.#started) {
+      console.log('already started');
       return;
     }
+    this.#started = true;
+
     const apiClient = new APIClient(this.appKey, this.secret);
     const roomInfo = await apiClient.initRoom(this.roomId);
     console.log(
@@ -155,7 +168,6 @@ export class DanmakuClient {
     );
     const client = new WebSocketClient(roomInfo, this.hostEventEmitter);
     client.start();
-    this.#started = true;
   }
 
   addEventEmitter(eventEmitter: EventEmitter) {
