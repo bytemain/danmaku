@@ -1,4 +1,4 @@
-import md5 from '../../utils/crypto/md5';
+import md5 from '../crypto/md5';
 
 const apiUrl = 'https://api.live.bilibili.com';
 

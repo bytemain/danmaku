@@ -1,7 +1,7 @@
 import { WebSocket } from 'ws';
 import { RoomInfo } from './api';
 import zlib from 'zlib';
-import { EPacketType, IPacketPayload } from './types/packet';
+import { EPacketType, IPacketPayload } from '../../common/types/packet';
 
 export class Packet {
   constructor(protected packetType: EPacketType, protected content: any) {}
@@ -98,8 +98,7 @@ const decoder = function (blob) {
  * @param {*} blob
  */
 export const decode = function (blob): Promise<IPacketPayload> {
-  return new Promise(function (resolve, reject) {
-    const result = decoder(blob);
-    resolve(result);
+  return new Promise(function (resolve) {
+    resolve(decoder(blob));
   });
 };

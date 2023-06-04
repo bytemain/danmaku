@@ -3,7 +3,8 @@ import { context as createContext, BuildOptions } from 'esbuild';
 import mri from 'mri';
 import { resolve } from 'path';
 import { builtinModules } from 'node:module';
-import { buildStat, cleanup } from 'scripts/build/plugins';
+import { buildStat } from 'scripts/build/plugins';
+import { getEsbuildAlias } from 'scripts/build/alias';
 
 const argv = mri(process.argv.slice(2));
 
@@ -28,6 +29,7 @@ export const buildParams = {
   external: ['electron', ...builtinModules.flatMap((m) => [m, `node:${m}`])],
   define,
   plugins: [buildStat()].filter(Boolean),
+  alias: getEsbuildAlias(),
 } as BuildOptions;
 
 async function buildMain() {

@@ -9,8 +9,8 @@
     "baseUrl": ".",
     "rootDir": ".",
     "paths": {
-      "@main": ["main"],
-      "@preload": ["preload"]
+      "@lib/*": ["lib/*"],
+      "@common/*": ["common/*"]
     }
   }
 }

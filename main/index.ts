@@ -11,10 +11,17 @@ import {
 } from 'electron';
 import path from 'path';
 
-import { AgentEventListener, DanmakuClient } from './bililive/live/danmaku';
-import { EDanmakuEventName } from 'common/types/danmaku';
+import {
+  AgentEventListener,
+  DanmakuClient,
+} from '@lib/bililive/main/live/danmaku';
 import { danmakuNotificationChannel } from 'common/ipc';
 import { Disposable } from 'common/disposable';
+import { EMessageEventType } from '@lib/bililive/common/types/danmaku';
+
+function isObject(obj: any) {
+  return typeof obj === 'object' && obj !== null;
+}
 
 ipcMain.handle('get-owner-browser-window-id', (event) => {
   return BrowserWindow.fromWebContents(event.sender).id;
@@ -133,51 +140,30 @@ const createDanmakuWindow = (roomId) => {
 
     disposable.add(danmakuClient.addEventEmitter(eventEmitter));
     disposable.add(
-      eventEmitter.onGift((gift) => {
+      eventEmitter.onCommand((command) => {
         if (!win) {
           disposable.dispose();
           return;
         }
         win.webContents.send(channelId, {
-          type: EDanmakuEventName.GIFT,
-          gift,
+          type: EMessageEventType.COMMAND,
+          command: {
+            name: command.name,
+            data: isObject(command.data) ? command.data : command.data.toJSON(),
+          },
         });
       })
     );
-    eventEmitter.onDanmaku((danmaku) => {
-      if (!win) {
-        disposable.dispose();
-        return;
-      }
 
-      console.log('channelId', channelId);
-      win.webContents.send(channelId, {
-        type: EDanmakuEventName.DANMAKU,
-        danmaku: danmaku.toJSON(),
-      });
-    });
     eventEmitter.onPopularity((popularity) => {
       if (!win) {
         disposable.dispose();
         return;
       }
 
-      console.log('channelId', channelId);
-
       win.webContents.send(channelId, {
-        type: EDanmakuEventName.POPULARITY,
+        type: EMessageEventType.POPULARITY,
         popularity: popularity.toJSON(),
-      });
-    });
-    eventEmitter.onWelcome((welcome) => {
-      if (!win) {
-        disposable.dispose();
-        return;
-      }
-
-      win.webContents.send(channelId, {
-        type: EDanmakuEventName.WELCOME,
-        welcome,
       });
     });
 

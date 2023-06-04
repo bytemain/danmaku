@@ -1,4 +1,12 @@
-import { IDanmaku } from 'common/types/danmaku';
+export interface IDanmaku {
+  uid: number;
+  createdAt: number;
+  username: string;
+  content: string;
+  medal: { name: string; level: string; color: number };
+  level: string;
+  levelColor: string;
+}
 
 /**
  * [

@@ -4,21 +4,21 @@ import { APIClient, RoomInfo } from './api';
 import { Packet, decode } from './packet';
 
 import WebSocket from 'ws';
-import { EDanmakuEventName, IGift, IWelcome } from 'common/types/danmaku';
-import { Danmaku } from './entity/danmaku';
+import { Danmaku } from '../../common/entity/danmaku';
 import { Disposable } from 'common/disposable';
 import { LimitedArray } from './utils';
-import { Popularity } from './entity/popularity';
-import { ENotificationType, EPacketType } from './types/packet';
-import { IWatchedChange } from './entity/watchedChange';
+import { Popularity } from '../../common/entity/popularity';
+import { ENotificationType, EPacketType } from '../../common/types/packet';
+import { IPacketWatchedChange } from '../../common/entity/watchedChange';
+import {
+  DanmakuClientOptions,
+  EMessageEventCommandPayload,
+  EMessageEventType,
+} from '../../common/types/danmaku';
+import { Gift } from 'lib/bililive/common/entity/gift';
+import { Welcome } from 'lib/bililive/common/entity/welcome';
 
 const chatUrl = 'wss://broadcastlv.chat.bilibili.com:2245/sub';
-
-export interface DanmakuClientOptions {
-  appKey: string;
-  secret: string;
-  roomId: number;
-}
 
 class WebSocketClient {
   constructor(public roomInfo: RoomInfo, private eventEmitter: EventEmitter) {}
@@ -39,14 +39,14 @@ class WebSocketClient {
         case EPacketType.POPULARITY: {
           const popularity = new Popularity(packet.body);
           console.log(popularity.toString());
-          this.eventEmitter.emit(EDanmakuEventName.POPULARITY, popularity);
+          this.eventEmitter.emit(EMessageEventType.POPULARITY, popularity);
           break;
         }
         case EPacketType.COMMAND:
           (packet.body as any[]).forEach((body) => {
             switch (body.cmd) {
               case ENotificationType.WATCHED_CHANGE: {
-                const data = body.data as IWatchedChange;
+                const data = body.data as IPacketWatchedChange;
                 console.log(
                   `🚀 ~ file: danmaku.ts:55 ~ WebSocketClient ~ data:`,
                   data
@@ -60,37 +60,38 @@ class WebSocketClient {
                   body.info
                 );
                 console.log(danmaku.toString());
-                this.eventEmitter.emit(EDanmakuEventName.DANMAKU, danmaku);
+                this.eventEmitter.emit(EMessageEventType.COMMAND, {
+                  name: ENotificationType.DANMU_MSG,
+                  data: danmaku,
+                });
                 break;
               }
               case ENotificationType.SEND_GIFT: {
-                console.log(
-                  `${body.data.uname} ${body.data.action} ${body.data.num} 个 ${body.data.giftName}`
-                );
-                this.eventEmitter.emit(EDanmakuEventName.GIFT, {
-                  username: body.data.uname,
-                  action: body.data.action,
-                  num: body.data.num,
-                  giftName: body.data.giftName,
-                } as IGift);
+                const gift = new Gift(body.data);
+                console.log(gift.toString());
+                this.eventEmitter.emit(EMessageEventType.COMMAND, {
+                  name: ENotificationType.SEND_GIFT,
+                  data: gift,
+                });
                 break;
               }
               case ENotificationType.WELCOME: {
-                console.log(`欢迎 ${body.data.uname}`);
-                this.eventEmitter.emit(EDanmakuEventName.WELCOME, {
-                  username: body.data.uname,
-                  uid: body.data.uid,
-                  type: ENotificationType.WELCOME,
-                } as IWelcome);
+                const welcome = new Welcome(body.data);
+                console.log(welcome.toString());
+                this.eventEmitter.emit(EMessageEventType.COMMAND, {
+                  name: ENotificationType.WELCOME,
+                  data: welcome,
+                });
                 break;
               }
               case ENotificationType.INTERACT_WORD: {
-                console.log(`欢迎 ${body.data.uname}`);
-                this.eventEmitter.emit(EDanmakuEventName.WELCOME, {
-                  username: body.data.uname,
-                  uid: body.data.uid,
-                  type: ENotificationType.INTERACT_WORD,
-                } as IWelcome);
+                const welcome = new Welcome(body.data);
+                console.log(welcome.toString());
+
+                this.eventEmitter.emit(EMessageEventType.COMMAND, {
+                  name: ENotificationType.INTERACT_WORD,
+                  data: welcome,
+                });
                 break;
               }
               default:
@@ -207,27 +208,15 @@ class HostEventListener extends EventEmitter {
 
 export class AgentEventListener extends EventEmitter {
   onPopularity(callback: (popularity: Popularity) => void) {
-    this.on(EDanmakuEventName.POPULARITY, callback);
+    this.on(EMessageEventType.POPULARITY, callback);
     return Disposable.create(() => {
-      this.off(EDanmakuEventName.POPULARITY, callback);
+      this.off(EMessageEventType.POPULARITY, callback);
     });
   }
-  onDanmaku(callback: (danmaku: Danmaku) => void) {
-    this.on(EDanmakuEventName.DANMAKU, callback);
+  onCommand(callback: (command: EMessageEventCommandPayload<any>) => void) {
+    this.on(EMessageEventType.COMMAND, callback);
     return Disposable.create(() => {
-      this.off(EDanmakuEventName.DANMAKU, callback);
-    });
-  }
-  onGift(callback: (gift: IGift) => void) {
-    this.on(EDanmakuEventName.GIFT, callback);
-    return Disposable.create(() => {
-      this.off(EDanmakuEventName.GIFT, callback);
-    });
-  }
-  onWelcome(callback: (welcome: IWelcome) => void) {
-    this.on(EDanmakuEventName.WELCOME, callback);
-    return Disposable.create(() => {
-      this.off(EDanmakuEventName.WELCOME, callback);
+      this.off(EMessageEventType.COMMAND, callback);
     });
   }
 }

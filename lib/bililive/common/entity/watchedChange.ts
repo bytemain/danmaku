@@ -1,4 +1,4 @@
-export interface IWatchedChange {
+export interface IPacketWatchedChange {
   /**
    * @example 0
    */

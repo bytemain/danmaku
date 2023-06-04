@@ -20,7 +20,9 @@
     "noFallthroughCasesInSwitch": true,
 
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@@lib/*": ["../lib/*"],
+      "@@common/*": ["../common/*"]
     }
   },
   "include": ["src"],

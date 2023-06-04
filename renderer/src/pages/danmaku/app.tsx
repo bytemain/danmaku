@@ -2,14 +2,18 @@ import './app.css';
 import { useEffect, useState } from 'react';
 import { List, ListItem, ListIcon } from '@chakra-ui/react';
 import { MdCheckCircle } from 'react-icons/md';
-import { danmakuNotificationChannel } from '../../../../common/ipc';
+import { danmakuNotificationChannel } from '@@common/ipc';
 import {
-  IDanmaku,
+  EMessageEventType,
+  ENotificationType,
+} from '@@lib/bililive/common/types';
+import {
   IGift,
   IWelcome,
-  EDanmakuEventName,
   IPopularity,
-} from '../../../../common/types/danmaku';
+  IDanmaku,
+} from '@@lib/bililive/common/entity';
+
 import { useDynamicList } from 'ahooks';
 
 interface MessageItem {
@@ -58,30 +62,36 @@ export function App() {
 
   useEffect(() => {
     const eventListener = (event: Event) => {
-      const data = (event as MessageEvent).data;
-      console.log(`🚀 ~ file: app.tsx:25 ~ eventListener ~ data:`, data);
-      if (data.type === EDanmakuEventName.POPULARITY) {
-        setPopularity((data.popularity as IPopularity).count);
-      } else if (data.type === EDanmakuEventName.DANMAKU) {
-        const danmaku = data.danmaku as IDanmaku;
-        danmakuList.push({
-          key: `${danmaku.username}: ${danmaku.content}` + danmaku.createdAt,
-          content: renderDanmaku(danmaku),
-        });
-      } else if (data.type === EDanmakuEventName.GIFT) {
-        const gift = data.gift as IGift;
-        danmakuList.push({
-          key:
-            `${gift.username} 赠送了 ${gift.num} 个 ${gift.giftName}` +
-            Date.now(),
-          content: `${gift.username} 赠送了 ${gift.num} 个 ${gift.giftName}`,
-        });
-      } else if (data.type === EDanmakuEventName.WELCOME) {
-        const welcome = data.welcome as IWelcome;
-        danmakuList.push({
-          key: `${welcome.username} 进入了直播间` + Date.now(),
-          content: `${welcome.username} 进入了直播间`,
-        });
+      const eventData = (event as MessageEvent).data;
+      console.log(`🚀 ~ file: app.tsx:25 ~ eventListener ~ data:`, eventData);
+      if (eventData.type === EMessageEventType.POPULARITY) {
+        setPopularity((eventData.popularity as IPopularity).count);
+      } else if (eventData.type === EMessageEventType.COMMAND) {
+        const { data, name } = eventData.command;
+        if (name === ENotificationType.DANMU_MSG) {
+          const danmaku = data as IDanmaku;
+          danmakuList.push({
+            key: `${danmaku.username}: ${danmaku.content}` + danmaku.createdAt,
+            content: renderDanmaku(danmaku),
+          });
+        } else if (name === ENotificationType.SEND_GIFT) {
+          const gift = data as IGift;
+          danmakuList.push({
+            key:
+              `${gift.username} 赠送了 ${gift.num} 个 ${gift.giftName}` +
+              Date.now(),
+            content: `${gift.username} 赠送了 ${gift.num} 个 ${gift.giftName}`,
+          });
+        } else if (
+          name === ENotificationType.WELCOME ||
+          name === ENotificationType.INTERACT_WORD
+        ) {
+          const welcome = data as IWelcome;
+          danmakuList.push({
+            key: `${welcome.username} 进入了直播间` + Date.now(),
+            content: `${welcome.username} 进入了直播间`,
+          });
+        }
       }
     };
 

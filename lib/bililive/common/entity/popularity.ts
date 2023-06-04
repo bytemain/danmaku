@@ -1,12 +1,14 @@
-import { IPopularity } from 'common/types/danmaku';
+export interface IPacketPopularity {
+  count: number;
+}
 
-export interface IPopularityBody {
+export interface IPopularity {
   count: number;
 }
 
 export class Popularity {
   count: number;
-  constructor(info: IPopularityBody) {
+  constructor(info: IPacketPopularity) {
     this.count = info.count;
   }
   toString() {
