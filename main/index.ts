@@ -106,7 +106,7 @@ const createMainWindow = () => {
   });
 
   if (process.env.NODE_ENV === 'production') {
-    win.loadFile(path.join(__dirname, '../renderer/dist/index.html'));
+    win.loadFile(path.join(__dirname, '../renderer/index.html'));
   } else {
     win.loadURL('http://localhost:5173');
   }
@@ -147,7 +147,7 @@ const createDanmakuWindow = (roomId) => {
   });
 
   if (process.env.NODE_ENV === 'production') {
-    win.loadFile(path.join(__dirname, '../renderer/dist/danmaku.html'));
+    win.loadFile(path.join(__dirname, '../renderer/danmaku.html'));
   } else {
     win.loadURL('http://localhost:5173/danmaku.html');
   }

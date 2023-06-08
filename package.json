@@ -6,12 +6,13 @@
   "private": true,
   "scripts": {
     "start": "electron-forge start",
-    "build": "tsx build.ts",
+    "build": "tsx build.ts && yarn renderer:build",
     "watch": "tsx build.ts --watch",
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
-    "renderer:dev": "yarn workspace renderer-react dev"
+    "renderer:dev": "yarn workspace renderer-react dev",
+    "renderer:build": "yarn workspace renderer-react build"
   },
   "devDependencies": {
     "@electron-forge/cli": "^6.1.1",

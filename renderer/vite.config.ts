@@ -6,7 +6,10 @@ import { getViteAlias } from '../scripts/build/alias';
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
+  base: './',
   build: {
+    emptyOutDir: true,
+    outDir: resolve(__dirname, '../dist/renderer'),
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),

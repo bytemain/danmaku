@@ -26,7 +26,7 @@ contextBridge.exposeInMainWorld('env', {
 ipcRenderer.invoke('get-owner-browser-window-id').then((id) => {
   console.log(`🚀 ~ file: index.js:41 ~ ipcRenderer.invoke ~ id:`, id);
 
-  ipcRenderer.on('danmaku-notification' + id, (e, arg) => {
+  ipcRenderer.on('danmaku-notification' + id, (e, arg: any) => {
     console.log(
       `🚀 ~ file: index.js:35 ~ ipcRenderer.on ~ 'danmaku-notification' + id:`,
       'danmaku-notification' + id
