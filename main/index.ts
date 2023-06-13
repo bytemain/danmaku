@@ -24,6 +24,22 @@ function isObject(obj: any) {
   return typeof obj === 'object' && obj !== null;
 }
 
+interface IDanmakuWindowInfo {
+  roomId: string;
+}
+
+const danmakuWindowIds = new Map<number, IDanmakuWindowInfo>();
+
+interface IWindowState {
+  shouldKeepFocus: boolean;
+}
+
+const defaultWindowState: IWindowState = {
+  shouldKeepFocus: false,
+};
+
+const windowStateMap = new Map<number, IWindowState>();
+
 ipcMain.handle('get-owner-browser-window-id', (event) => {
   return BrowserWindow.fromWebContents(event.sender).id;
 });
@@ -113,7 +129,7 @@ const createMainWindow = () => {
   return win;
 };
 
-const createDanmakuWindow = (roomId) => {
+const createDanmakuWindow = (roomId: string) => {
   let win = new BrowserWindow({
     width: 800,
     height: 600,
@@ -133,17 +149,24 @@ const createDanmakuWindow = (roomId) => {
       additionalArguments: ['--roomId=' + roomId],
     },
   });
+  function setIgnoreMouseEvents(ignore: boolean) {
+    const windowState = windowStateMap.get(win.id) ?? defaultWindowState;
+    if (windowState.shouldKeepFocus) {
+      return;
+    }
+    win.setIgnoreMouseEvents(ignore);
+  }
   win.on('blur', () => {
-    win.setIgnoreMouseEvents(true);
+    setIgnoreMouseEvents(true);
   });
   win.on('focus', () => {
-    win.setIgnoreMouseEvents(false);
+    setIgnoreMouseEvents(false);
   });
   win.on('resize', () => {
-    win.setIgnoreMouseEvents(false);
+    setIgnoreMouseEvents(false);
   });
   win.on('will-resize', () => {
-    win.setIgnoreMouseEvents(false);
+    setIgnoreMouseEvents(false);
   });
 
   if (process.env.NODE_ENV === 'production') {
@@ -153,6 +176,14 @@ const createDanmakuWindow = (roomId) => {
   }
 
   const disposable = new Disposable();
+  danmakuWindowIds.set(win.id, {
+    roomId,
+  });
+  disposable.add({
+    dispose: () => {
+      danmakuWindowIds.delete(win.id);
+    },
+  });
   win.on('close', () => {
     console.log('cleanup');
     // 移除所有的事件监听
@@ -210,6 +241,71 @@ const createDanmakuWindow = (roomId) => {
 let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
 
+function buildTray() {
+  const danmakuWindow = Array.from(
+    danmakuWindowIds.entries(),
+    ([id, { roomId }]) => ({
+      label: `${id}: Room ${roomId}`,
+      type: 'submenu',
+      submenu: [
+        {
+          label: 'Close',
+          click: () => {
+            const win = BrowserWindow.fromId(id);
+            if (win) {
+              win.close();
+            }
+          },
+        },
+        {
+          label: 'Keep focus',
+          type: 'checkbox',
+          checked: (windowStateMap.get(id) ?? defaultWindowState)
+            .shouldKeepFocus,
+          click: () => {
+            const oldState = windowStateMap.get(id) ?? defaultWindowState;
+            windowStateMap.set(id, {
+              ...oldState,
+              shouldKeepFocus: !oldState.shouldKeepFocus,
+            });
+            const win = BrowserWindow.fromId(id);
+            if (win) {
+              win.setIgnoreMouseEvents(false);
+              win.focus();
+            }
+          },
+        },
+      ],
+    })
+  ) as Electron.MenuItemConstructorOptions[];
+  if (danmakuWindow.length > 0) {
+    danmakuWindow.push({ type: 'separator' });
+  }
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: 'Open Main Window',
+      click: () => {
+        if (mainWindow) {
+          mainWindow.show();
+        } else {
+          mainWindow = createMainWindow();
+        }
+      },
+    },
+    { type: 'separator' },
+    ...danmakuWindow,
+    {
+      label: 'Quit',
+      role: 'quit',
+      click: () => {
+        app.quit();
+      },
+    },
+  ]);
+  tray.setToolTip('Bililive');
+  tray.setContextMenu(contextMenu);
+}
+
 app.whenReady().then(() => {
   mainWindow = createMainWindow();
   app.on('activate', () => {
@@ -225,25 +321,10 @@ app.whenReady().then(() => {
   });
 
   tray = new Tray('./assets/icons/png/24x24.png');
-  const contextMenu = Menu.buildFromTemplate([
-    {
-      label: 'Open Main Window',
-      click: () => {
-        if (mainWindow) {
-          mainWindow.show();
-        } else {
-          mainWindow = createMainWindow();
-        }
-      },
-    },
-    { type: 'separator' },
-    {
-      label: 'Quit',
-      role: 'quit',
-    },
-  ]);
-  tray.setToolTip('Bililive');
-  tray.setContextMenu(contextMenu);
+  buildTray();
+  tray.on('click', () => {
+    buildTray();
+  });
 });
 
 app.on('window-all-closed', () => {
