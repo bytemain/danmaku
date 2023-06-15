@@ -33,10 +33,6 @@ class WebSocketClient {
 
     ws.on('message', async (data) => {
       const packet = await decode(data);
-      console.log(
-        `🚀 ~ file: danmaku.ts:42 ~ WebSocketClient ~ ws.on ~ packet:`,
-        packet
-      );
       switch (packet.op) {
         case EPacketType.POPULARITY: {
           const popularity = new Popularity(packet.body);
@@ -53,6 +49,10 @@ class WebSocketClient {
                   `🚀 ~ file: danmaku.ts:55 ~ WebSocketClient ~ data:`,
                   data
                 );
+                this.eventEmitter.emit(EMessageEventType.COMMAND, {
+                  name: ENotificationType.WATCHED_CHANGE,
+                  data: data,
+                });
                 break;
               }
               case ENotificationType.DANMU_MSG: {

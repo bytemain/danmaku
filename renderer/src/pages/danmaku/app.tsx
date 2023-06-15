@@ -11,6 +11,7 @@ import {
   IWelcome,
   IPopularity,
   IDanmaku,
+  IPacketWatchedChange,
 } from '@@lib/bililive/common/entity';
 import { MoonIcon, SunIcon } from '@chakra-ui/icons';
 
@@ -24,6 +25,9 @@ interface MessageItem {
 
 export function App() {
   const [popularity, setPopularity] = useState(0);
+  const [watchedChange, setWatchedChange] = useState({
+    num: 0,
+  } as IPacketWatchedChange);
   const [leftBottomOverlayVisible, setLeftBottomOverlayVisible] =
     useState(false);
   const danmakuList = useDynamicList<MessageItem>([]);
@@ -144,6 +148,9 @@ export function App() {
             key: `${welcome.username} 进入了直播间` + Date.now(),
             content: `${welcome.username} 进入了直播间`,
           });
+        } else if (name === ENotificationType.WATCHED_CHANGE) {
+          const watchedChange = data as IPacketWatchedChange;
+          setWatchedChange(watchedChange);
         }
       }
     };
@@ -193,6 +200,7 @@ export function App() {
               onClick={toggleColorMode}
             ></SunIcon>
           )}
+          {watchedChange.num} 人看过
         </Box>
       </Box>
     </Box>
