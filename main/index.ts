@@ -132,6 +132,15 @@ const createMainWindow = () => {
   return win;
 };
 
+function ignoreWinMouseEvent(id: number, ignore: boolean) {
+  const win = BrowserWindow.fromId(id);
+  if (!win) {
+    return;
+  }
+  win.setResizable(!ignore);
+  win.setIgnoreMouseEvents(ignore);
+}
+
 const createDanmakuWindow = (roomId: string) => {
   let win = new BrowserWindow({
     width: 800,
@@ -157,7 +166,7 @@ const createDanmakuWindow = (roomId: string) => {
     if (windowState.shouldKeepFocus) {
       return;
     }
-    win.setIgnoreMouseEvents(ignore);
+    ignoreWinMouseEvent(win.id, ignore);
   }
   win.on('blur', () => {
     setIgnoreMouseEvents(true);
@@ -272,15 +281,22 @@ function buildTray() {
             .shouldKeepFocus,
           click: () => {
             const oldState = windowStateMap.get(id) ?? defaultWindowState;
-            windowStateMap.set(id, {
-              ...oldState,
-              shouldKeepFocus: !oldState.shouldKeepFocus,
-            });
+            const shouldKeepFocus = !oldState.shouldKeepFocus;
             const win = BrowserWindow.fromId(id);
             if (win) {
-              win.setIgnoreMouseEvents(false);
-              win.focus();
+              if (shouldKeepFocus) {
+                win.focus();
+              } else {
+                win.blur();
+              }
+              ignoreWinMouseEvent(win.id, !shouldKeepFocus);
             }
+
+            // 放在最后更新状态
+            windowStateMap.set(id, {
+              ...oldState,
+              shouldKeepFocus,
+            });
           },
         },
       ],
