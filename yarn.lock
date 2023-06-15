@@ -3579,6 +3579,7 @@ __metadata:
     eslint-config-prettier: ^8.8.0
     eventemitter3: ^5.0.1
     filesize: ^10.0.7
+    lodash: ^4.17.21
     mri: ^1.2.0
     tsx: ^3.12.7
     typescript: ^5.0.2
