@@ -19,6 +19,7 @@ import {
 import { danmakuNotificationChannel } from 'common/ipc';
 import { Disposable } from 'common/disposable';
 import { EMessageEventType } from '@lib/bililive/common/types/danmaku';
+import { IGetInfoResponse } from '@lib/bililive/main/live/api';
 
 function isObject(obj: any) {
   return typeof obj === 'object' && obj !== null;
@@ -26,6 +27,7 @@ function isObject(obj: any) {
 
 interface IDanmakuWindowInfo {
   roomId: string;
+  roomInfo: IGetInfoResponse['data'] | undefined;
 }
 
 const danmakuWindowIds = new Map<number, IDanmakuWindowInfo>();
@@ -177,9 +179,7 @@ const createDanmakuWindow = (roomId: string) => {
   }
 
   const disposable = new Disposable();
-  danmakuWindowIds.set(win.id, {
-    roomId,
-  });
+
   disposable.add({
     dispose: () => {
       danmakuWindowIds.delete(win.id);
@@ -235,6 +235,11 @@ const createDanmakuWindow = (roomId: string) => {
     });
 
     await danmakuClient.start();
+    const roomInfo = await danmakuClient.getRoomInfo();
+    danmakuWindowIds.set(win.id, {
+      roomId,
+      roomInfo,
+    });
   });
   win.webContents.openDevTools();
 };
@@ -245,8 +250,10 @@ let tray: Tray | null = null;
 function buildTray() {
   const danmakuWindow = Array.from(
     danmakuWindowIds.entries(),
-    ([id, { roomId }]) => ({
-      label: `${id}: Room ${roomId}`,
+    ([id, { roomId, roomInfo }]) => ({
+      label: `${id}: ${
+        roomInfo ? `${roomInfo.title} - ${roomInfo.area_name}` : 'Room'
+      }(${roomId})`,
       type: 'submenu',
       submenu: [
         {

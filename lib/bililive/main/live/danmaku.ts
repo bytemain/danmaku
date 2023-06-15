@@ -1,6 +1,6 @@
 import { EventEmitter } from 'eventemitter3';
 
-import { APIClient, RoomInfo } from './api';
+import { APIClient, IGetInfoResponse, RoomInfo } from './api';
 import { Packet, decode } from './packet';
 
 import WebSocket from 'ws';
@@ -125,10 +125,14 @@ export class DanmakuClient {
   secret: string;
   roomId: number;
 
+  public roomInfo?: IGetInfoResponse['data'];
+
   #started = false;
   private hostEventEmitter = new HostEventListener();
 
   static nextId = 0;
+  apiClient: APIClient;
+
   static getNextId() {
     return this.nextId++;
   }
@@ -137,6 +141,7 @@ export class DanmakuClient {
     this.appKey = options.appKey;
     this.secret = options.secret;
     this.roomId = options.roomId;
+    this.apiClient = new APIClient(this.appKey, this.secret);
   }
 
   static instance(roomId: string) {
@@ -153,6 +158,19 @@ export class DanmakuClient {
     return client;
   }
 
+  async getRoomInfo(): Promise<IGetInfoResponse['data'] | undefined> {
+    if (this.roomInfo) {
+      return this.roomInfo;
+    }
+    const moreInfo = await this.apiClient.getRoomInfo(this.roomId);
+    console.log(
+      `🚀 ~ file: danmaku.ts:173 ~ DanmakuClient ~ start ~ moreInfo:`,
+      moreInfo
+    );
+    this.roomInfo = moreInfo;
+    return this.roomInfo;
+  }
+
   async start() {
     if (this.#started) {
       console.log('already started');
@@ -160,8 +178,8 @@ export class DanmakuClient {
     }
     this.#started = true;
 
-    const apiClient = new APIClient(this.appKey, this.secret);
-    const roomInfo = await apiClient.initRoom(this.roomId);
+    const roomInfo = await this.apiClient.initRoom(this.roomId);
+
     console.log(`connect to room`, roomInfo);
     const client = new WebSocketClient(roomInfo, this.hostEventEmitter);
     client.start();
