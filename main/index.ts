@@ -9,6 +9,7 @@ import {
   Menu,
   MenuItemConstructorOptions,
   Tray,
+  screen,
 } from 'electron';
 import path from 'path';
 
@@ -115,9 +116,15 @@ ipcMain.handle('danmaku-menu', (event) => {
 });
 
 const createMainWindow = () => {
+  const desktopSize = screen.getPrimaryDisplay().workAreaSize;
+  console.log(
+    `🚀 ~ file: index.ts:120 ~ createMainWindow ~ desktopSize:`,
+    desktopSize
+  );
+
   const win = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: Math.floor(desktopSize.width * 0.8),
+    height: Math.floor(desktopSize.height * 0.8),
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
       webviewTag: true,

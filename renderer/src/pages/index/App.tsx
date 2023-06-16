@@ -53,12 +53,41 @@ function App() {
     );
   };
 
-  const panes = {
-    danmaku: renderDanmaku,
-    roomManage: renderRoomManage,
-  } as Record<string, () => JSX.Element>;
+  const renderRoom = () => {
+    return (
+      <webview
+        style={{
+          display: 'flex',
+          width: '100%',
+          height: '100%',
+        }}
+        partition='persist:bilibili'
+        src='https://live.bilibili.com/1422245'
+      ></webview>
+    );
+  };
 
-  const [activePane, setActivePane] = useState(Object.keys(panes)[0]);
+  const panes = {
+    danmaku: {
+      render: renderDanmaku,
+    },
+    roomManage: {
+      render: renderRoomManage,
+      keepAlive: true,
+    },
+    room: {
+      render: renderRoom,
+      keepAlive: true,
+    },
+  } as Record<
+    string,
+    {
+      render: () => JSX.Element;
+      keepAlive?: boolean;
+    }
+  >;
+  const paneNames = Object.keys(panes);
+  const [activePane, setActivePane] = useState(paneNames[0]);
   const [history, setHistory] = useLocalStorageState<string[]>(
     'roomIdHistory',
     {
@@ -94,34 +123,56 @@ function App() {
       templateAreas={`"header header"
                   "nav main"
                   "nav footer"`}
-      gridTemplateRows={'50px 1fr 30px'}
+      gridTemplateRows={'0px 1fr 0px'}
       gridTemplateColumns={'150px 1fr'}
       h='100vh'
       w='100vw'
       gap='1'
       color='blackAlpha.700'
     >
-      <GridItem pl='2' bg='orange.300' area={'header'}>
-        Header
+      <GridItem bg='orange.300' area={'header'}>
+        {/* Header */}
       </GridItem>
-      <GridItem pl='2' bg='pink.300' area={'nav'}>
-        <List spacing={3}>
+      <GridItem bg='pink.300' area={'nav'}>
+        <List userSelect={'none'} spacing={3}>
           {Object.keys(panes).map((key) => {
             return (
               <ListItem>
-                <Button onClick={() => setActivePane(key)}>{key}</Button>
+                <Box
+                  width={'100%'}
+                  border={'1px solid'}
+                  padding={2}
+                  cursor={'pointer'}
+                  onClick={() => setActivePane(key)}
+                >
+                  {key}
+                </Box>
               </ListItem>
             );
           })}
         </List>
       </GridItem>
-      <GridItem pl='2' bg='green.300' area={'main'}>
-        {activePane &&
-          typeof panes[activePane] === 'function' &&
-          panes[activePane]()}
+      <GridItem bg='green.300' area={'main'}>
+        {paneNames.map((key) => {
+          if (panes[key].keepAlive || activePane === key) {
+            return (
+              <Box
+                key={key}
+                style={{
+                  display: activePane === key ? 'flex' : 'none',
+                  width: '100%',
+                  height: '100%',
+                }}
+              >
+                {panes[key].render()}
+              </Box>
+            );
+          }
+          return null;
+        })}
       </GridItem>
-      <GridItem pl='2' bg='blue.300' area={'footer'}>
-        Footer
+      <GridItem bg='blue.300' area={'footer'}>
+        {/* Footer */}
       </GridItem>
     </Grid>
   );
