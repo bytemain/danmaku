@@ -15,5 +15,6 @@ module.exports = {
   rules: {
     'no-unused-vars': 'off',
     'no-undef': 'off',
+    '@typescript-eslint/adjacent-overload-signatures': 'off',
   },
 };
