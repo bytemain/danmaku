@@ -10,8 +10,15 @@ export function getEsbuildAlias() {
 }
 
 export function getViteAlias() {
-  return alias.reduce((acc, cur) => {
+  const outDir = alias.reduce((acc, cur) => {
     acc[`@@${cur}`] = path.resolve(__dirname, `../../${cur}`);
     return acc;
   }, {});
+  const inner = {
+    '@/': './src',
+  };
+  return {
+    ...outDir,
+    ...inner,
+  };
 }

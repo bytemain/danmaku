@@ -4,6 +4,7 @@ import { Box, Button, Grid, GridItem, List, ListItem } from '@chakra-ui/react';
 import React from 'react';
 import uniq from 'lodash/uniq';
 import { useState } from 'react';
+import { WebviewWithController } from '@/components/webview-controller';
 
 function App() {
   const [roomId, setRoomId] = useLocalStorageState('roomId', {
@@ -39,50 +40,34 @@ function App() {
     );
   };
 
-  const renderRoomManage = () => {
-    return (
-      <webview
-        style={{
-          display: 'flex',
-          width: '100%',
-          height: '100%',
-        }}
-        partition='persist:bilibili'
-        src='https://link.bilibili.com/p/center/index#/my-room/start-live'
-      ></webview>
-    );
-  };
-
-  const renderRoom = () => {
-    return (
-      <webview
-        style={{
-          display: 'flex',
-          width: '100%',
-          height: '100%',
-        }}
-        partition='persist:bilibili'
-        src='https://live.bilibili.com/1422245'
-      ></webview>
-    );
-  };
-
   const panes = {
     danmaku: {
       render: renderDanmaku,
     },
     roomManage: {
-      render: renderRoomManage,
+      component: WebviewWithController,
+      props: {
+        src: 'https://link.bilibili.com/p/center/index#/my-room/start-live',
+        isPersist: true,
+        partition: 'bilibili',
+      },
       keepAlive: true,
     },
     room: {
-      render: renderRoom,
+      component: WebviewWithController,
+      props: {
+        src: 'https://live.bilibili.com/1422245',
+        isPersist: true,
+        partition: 'bilibili',
+      },
       keepAlive: true,
     },
   } as Record<
     string,
     {
-      render: () => JSX.Element;
+      props?: Record<string, any>;
+      render?: () => JSX.Element;
+      component?: React.ComponentType | any;
       keepAlive?: boolean;
     }
   >;
@@ -154,6 +139,8 @@ function App() {
       </GridItem>
       <GridItem bg='green.300' area={'main'}>
         {paneNames.map((key) => {
+          const func = panes[key].render;
+          const Component = panes[key].component;
           if (panes[key].keepAlive || activePane === key) {
             return (
               <Box
@@ -164,7 +151,11 @@ function App() {
                   height: '100%',
                 }}
               >
-                {panes[key].render()}
+                {func ? (
+                  func()
+                ) : Component ? (
+                  <Component {...panes[key].props} />
+                ) : null}
               </Box>
             );
           }
