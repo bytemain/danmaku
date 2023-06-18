@@ -44,6 +44,11 @@ interface IGiftItem {
   content: any;
 }
 
+const kLineHeight = 24;
+const kLineHeightPx = `${kLineHeight}px`;
+
+const kBottomBarHeight = `${kLineHeight + 8}px`;
+
 const DanmakuItem = (props: { data: IDanmaku }) => {
   const { data: danmaku } = props;
   const renderMedal = (danmaku: IDanmaku) => {
@@ -75,8 +80,9 @@ const DanmakuItem = (props: { data: IDanmaku }) => {
           borderColor: borderColor,
           fontSize: '14px',
           display: 'flex',
-          height: '22px',
-          lineHeight: '20px',
+          padding: '0',
+          height: `${kLineHeight - 2}px}`,
+          lineHeight: `${kLineHeight - 4}px}`,
           boxSizing: 'content-box',
         }}
       >
@@ -140,7 +146,7 @@ const DanmakuItem = (props: { data: IDanmaku }) => {
   //   );
   // };
   return (
-    <Box display={'inline-flex'} height={'24px'}>
+    <Box display={'inline-flex'} height={kLineHeightPx} mt='3px'>
       {renderMedal(danmaku)}
       {/* 官方都已经不显示 level 了，这里也不显示了 */}
       {/* {renderLevel(danmaku)} */}
@@ -189,7 +195,6 @@ export function App() {
     useState(false);
   const danmakuList = useDynamicList<IDanmakuItem>([]);
   const enterList = useDynamicList<IEnterRoomItem>([]);
-  const giftList = useDynamicList<IGiftItem>([]);
   const { colorMode, toggleColorMode } = useColorMode();
   useEffect(() => {
     const eventListener = (event: Event) => {
@@ -250,8 +255,8 @@ export function App() {
       return (
         <div
           style={{
-            height: '24px',
-            lineHeight: '24px',
+            height: kLineHeightPx,
+            lineHeight: kLineHeightPx,
           }}
           key={
             `${gift.username} 赠送了 ${gift.num} 个 ${gift.giftName}` +
@@ -270,8 +275,8 @@ export function App() {
     return (
       <div
         style={{
-          height: '24px',
-          lineHeight: '24px',
+          height: kLineHeightPx,
+          lineHeight: kLineHeightPx,
         }}
         key={item.key}
       >
@@ -283,28 +288,27 @@ export function App() {
   return (
     <Box h='100vh' className='app-container'>
       <Flex height={'100vh'} direction={'column'}>
-        <Box p='2px' h='24px'>
+        <Box p='2px' h={kLineHeightPx}>
           <Box className='header'>当前人气：{popularity}</Box>
         </Box>
         <Spacer />
         <Divider />
         <Box p='2px'>
           <StickyBottomVirtualList
-            height={'calc(100vh - 20px - 48px)'}
+            height={`calc(100vh - ${kLineHeightPx} - ${kBottomBarHeight})`}
             totalCount={danmakuList.list.length}
             itemContent={danmakuItemContent}
           />
         </Box>
         <Divider />
-        <Box p='2px' height={`${24 + 8}px`}>
+        <Box p='2px' height={kBottomBarHeight}>
           <StickyBottomVirtualList
-            height={`${24}px`}
+            height={kLineHeightPx}
             totalCount={enterList.list.length}
             itemContent={enterRoomItemContent}
           />
         </Box>
       </Flex>
-
       <Box
         position={'fixed'}
         left={5}
@@ -320,6 +324,8 @@ export function App() {
         <Box
           visibility={leftBottomOverlayVisible ? 'visible' : 'hidden'}
           display={'flex'}
+          backgroundColor={colorMode === 'light' ? 'white' : 'black'}
+          p={2}
         >
           {colorMode === 'light' ? (
             <MoonIcon
