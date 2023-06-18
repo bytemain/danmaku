@@ -36,10 +36,12 @@ const danmakuWindowIds = new Map<number, IDanmakuWindowInfo>();
 
 interface IWindowState {
   shouldKeepFocus: boolean;
+  paused: boolean;
 }
 
 const defaultWindowState: IWindowState = {
   shouldKeepFocus: false,
+  paused: false,
 };
 
 const windowStateMap = new Map<number, IWindowState>();
@@ -78,62 +80,9 @@ ipcMain.handle('retrieve-danmaku', async (event, { roomId }) => {
 let currentTransparency = 80;
 
 ipcMain.handle('danmaku-menu', (event) => {
-  const transparencyStep = 10;
-  const transparencyMax = 100;
-  const transparencyMin = 20;
-
   const win = BrowserWindow.fromWebContents(event.sender);
-  if (win) {
-    const opacity = win.getOpacity();
-    currentTransparency = Math.floor(opacity * 100);
-  }
-
-  const transparencyMenu = [] as Electron.MenuItemConstructorOptions[];
-
-  for (let i = transparencyMin; i <= transparencyMax; i += transparencyStep) {
-    transparencyMenu.push({
-      label: `${i}%`,
-      type: 'radio',
-      checked: i === currentTransparency,
-      click: () => {
-        const win = BrowserWindow.fromWebContents(event.sender);
-        if (win) win.setOpacity(i / 100);
-      },
-    });
-  }
-
-  const template = [
-    {
-      label: 'Transparency',
-      type: 'submenu',
-      submenu: transparencyMenu,
-    },
-    { type: 'separator' },
-    {
-      label: 'Always on top',
-      type: 'checkbox',
-      checked: win ? win.isAlwaysOnTop() : false,
-      click: () => {
-        const win = BrowserWindow.fromWebContents(event.sender);
-        if (win) win.setAlwaysOnTop(!win.isAlwaysOnTop());
-      },
-    },
-    {
-      label: 'Reload',
-      click: () => {
-        const win = BrowserWindow.fromWebContents(event.sender);
-        if (win) win.reload();
-      },
-    },
-    {
-      label: 'Close',
-      click: () => {
-        const win = BrowserWindow.fromWebContents(event.sender);
-        if (win) win.close();
-      },
-    },
-  ] as MenuItemConstructorOptions[];
-  const menu = Menu.buildFromTemplate(template);
+  if (!win) return;
+  const menu = Menu.buildFromTemplate(buildDanmakuWindowContextMenu(win));
   menu.popup({
     window: BrowserWindow.fromWebContents(event.sender),
   });
@@ -240,6 +189,10 @@ const createDanmakuWindow = (roomId: string) => {
     const channelId = danmakuNotificationChannel;
 
     const eventEmitter = new AgentEventListener();
+    eventEmitter.registerBeforeEmit(() => {
+      return windowStateMap.get(win.id)?.paused;
+    });
+
     disposable.add(eventEmitter);
     disposable.add(danmakuClient.addEventEmitter(eventEmitter));
     disposable.add(
@@ -277,12 +230,87 @@ const createDanmakuWindow = (roomId: string) => {
       roomInfo,
       eventEmitter,
     });
+    win.focus();
   });
   win.webContents.openDevTools();
 };
 
 let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
+
+function buildDanmakuWindowContextMenu(win: BrowserWindow) {
+  if (!win) return [];
+  const transparencyStep = 10;
+  const transparencyMax = 100;
+  const transparencyMin = 20;
+
+  const opacity = win.getOpacity();
+  currentTransparency = Math.floor(opacity * 100);
+
+  const transparencyMenu = [] as Electron.MenuItemConstructorOptions[];
+
+  for (let i = transparencyMin; i <= transparencyMax; i += transparencyStep) {
+    transparencyMenu.push({
+      label: `${i}%`,
+      type: 'radio',
+      checked: i === currentTransparency,
+      click: () => {
+        if (win) win.setOpacity(i / 100);
+      },
+    });
+  }
+
+  const template = [
+    {
+      label: 'Transparency',
+      type: 'submenu',
+      submenu: transparencyMenu,
+    },
+    { type: 'separator' },
+    {
+      label: 'Always on top',
+      type: 'checkbox',
+      checked: win ? win.isAlwaysOnTop() : false,
+      click: () => {
+        if (win) win.setAlwaysOnTop(!win.isAlwaysOnTop());
+      },
+    },
+    {
+      label: 'Pause',
+      type: 'checkbox',
+      checked: (windowStateMap.get(win.id) ?? defaultWindowState).paused,
+      click: () => {
+        const oldState = windowStateMap.get(win.id);
+
+        windowStateMap.set(win.id, {
+          ...oldState,
+          paused: !oldState?.paused,
+        });
+      },
+    },
+    {
+      label: 'Reload',
+      click: () => {
+        if (win) win.reload();
+      },
+    },
+    {
+      label: 'Toggle DevTools',
+      click: () => {
+        if (win) {
+          win.webContents.toggleDevTools();
+        }
+      },
+    },
+    {
+      label: 'Close',
+      click: () => {
+        if (win) win.close();
+      },
+    },
+  ] as MenuItemConstructorOptions[];
+  return template;
+}
 
 function buildTray() {
   const danmakuWindow = Array.from(
@@ -294,20 +322,11 @@ function buildTray() {
       type: 'submenu',
       submenu: [
         {
-          label: 'Close',
+          label: 'Focus',
           click: () => {
             const win = BrowserWindow.fromId(id);
             if (win) {
-              win.close();
-            }
-          },
-        },
-        {
-          label: 'Reload',
-          click: () => {
-            const win = BrowserWindow.fromId(id);
-            if (win) {
-              win.reload();
+              win.focus();
             }
           },
         },
@@ -336,6 +355,8 @@ function buildTray() {
             });
           },
         },
+        { type: 'separator' },
+        ...buildDanmakuWindowContextMenu(BrowserWindow.fromId(id)),
       ],
     })
   ) as Electron.MenuItemConstructorOptions[];

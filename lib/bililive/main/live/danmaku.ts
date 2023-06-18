@@ -237,6 +237,17 @@ class HostEventListener extends EventEmitter {
 }
 
 export class AgentEventListener extends EventEmitter {
+  _beforeEmit = [] as (() => boolean)[];
+  registerBeforeEmit(cb: () => boolean) {
+    this._beforeEmit.push(cb);
+  }
+  emit<T extends string | symbol>(event: T, ...args: any[]): boolean {
+    if (this._beforeEmit.some((cb) => cb())) {
+      return false;
+    }
+
+    return super.emit(event, ...args);
+  }
   onPopularity(callback: (popularity: Popularity) => void) {
     this.on(EMessageEventType.POPULARITY, callback);
     return Disposable.create(() => {
