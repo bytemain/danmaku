@@ -1,9 +1,19 @@
+export interface IMedal {
+  name: string;
+  level: string;
+  baseColor: number;
+  upName: string;
+  borderColor: number;
+  nextColor: number;
+  guardLevel: number;
+}
+
 export interface IDanmaku {
   uid: number;
   createdAt: number;
   username: string;
   content: string;
-  medal: { name: string; level: string; color: number };
+  medal: IMedal;
   level: string;
   levelColor: number;
 }
@@ -12,13 +22,17 @@ export class Danmaku {
   username: string;
   uid: number;
   content: string;
-  medal: { name: string; level: string; color: number };
+  medal: IMedal;
   level: string;
   levelColor: number;
 
   createdAt: number;
 
   constructor(info: any) {
+    console.log(
+      `🚀 ~ file: danmaku.ts:22 ~ Danmaku ~ constructor ~ info:`,
+      info
+    );
     this.createdAt = info[0][4];
     this.uid = info[2][0];
     this.username = info[2][1];
@@ -31,7 +45,11 @@ export class Danmaku {
       this.medal = {
         level: info[3][0],
         name: info[3][1],
-        color: info[3][2],
+        upName: info[3][2],
+        baseColor: info[3][4],
+        borderColor: info[3][7],
+        nextColor: info[3][9],
+        guardLevel: info[3][10],
       };
     }
   }

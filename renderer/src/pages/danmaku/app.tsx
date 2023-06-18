@@ -17,10 +17,26 @@ import { MoonIcon, SunIcon } from '@chakra-ui/icons';
 
 import { useDynamicList } from 'ahooks';
 
+import guardV3 from '../../../public/guard-3.webp';
+import guardV2 from '../../../public/guard-2.webp';
+
+const getGuardIcon = (guardLevel: number) => {
+  return {
+    2: guardV2,
+    3: guardV3,
+  }[guardLevel];
+};
+
 interface MessageItem {
   key: string;
   content: string | React.ReactElement;
   icon?: string;
+}
+
+interface IEnterRoomItem {
+  key: string;
+  name: string;
+  type: string;
 }
 
 export function App() {
@@ -31,45 +47,80 @@ export function App() {
   const [leftBottomOverlayVisible, setLeftBottomOverlayVisible] =
     useState(false);
   const danmakuList = useDynamicList<MessageItem>([]);
+  const enterList = useDynamicList<IEnterRoomItem>([]);
   const { colorMode, toggleColorMode } = useColorMode();
-  const renderBadge = (danmaku: IDanmaku) => {
+  const renderMedal = (danmaku: IDanmaku) => {
+    console.log(`🚀 ~ file: app.tsx:36 ~ renderBadge ~ danmaku:`, danmaku);
     if (!danmaku.medal) {
       return null;
     }
     if (Object.keys(danmaku.medal).length === 0) {
       return null;
     }
-    const color = `#${danmaku.medal.color.toString(16)}`;
+    const baseColor = `#${danmaku.medal.baseColor
+      .toString(16)
+      .padStart(6, '0')}`;
+    const borderColor = `#${danmaku.medal.borderColor
+      .toString(16)
+      .padStart(6, '0')}`;
+    const nextColor = `#${danmaku.medal.nextColor
+      .toString(16)
+      .padStart(6, '0')}`;
+    console.log(`🚀 ~ file: app.tsx:42 ~ renderBadge ~ color:`, baseColor);
     return (
-      <Box as='span' className='badge' marginRight={'0.5em'}>
-        <Box
-          as='span'
+      <span
+        className='badge'
+        style={{
+          marginRight: '0.5em',
+          borderRadius: '0.1em 0 0 0.1em',
+          borderStyle: 'solid',
+          borderWidth: '1px',
+          borderColor: borderColor,
+          fontSize: '14px',
+          display: 'flex',
+          height: '22px',
+          lineHeight: '20px',
+          boxSizing: 'content-box',
+        }}
+      >
+        <span
           className='badge-name'
-          padding={'0 0.5em'}
-          borderRadius={'0.1em 0 0 0.1em'}
-          borderStyle={'solid'}
-          borderWidth={'1px'}
           style={{
-            borderColor: color,
-            backgroundColor: color,
+            display: 'flex',
+            padding: '0 0.5em',
+            borderRadius: '0.1em 0 0 0.1em',
+            borderStyle: 'solid',
+            borderWidth: '1px',
+            backgroundImage: `linear-gradient(45deg, ${baseColor}, ${nextColor})`,
+            color: 'white',
           }}
         >
+          <span
+            style={{
+              display: danmaku.medal.guardLevel > 1 ? 'inline-block' : 'none',
+              backgroundRepeat: 'no-repeat',
+              backgroundSize: 'contain',
+              backgroundPosition: 'center center',
+              marginRight: '2px',
+              backgroundImage: `url(${getGuardIcon(danmaku.medal.guardLevel)})`,
+              width: '22px',
+              height: '22px',
+              marginLeft: '-12px',
+            }}
+          ></span>
           {danmaku.medal.name}
-        </Box>
-        <Box
-          as='span'
-          style={{
-            borderColor: color,
-          }}
+        </span>
+        <span
           className='badge-level'
-          padding={'0 0.2em'}
-          borderRadius={' 0 0.1em 0.1em 0'}
-          borderStyle={'solid'}
-          borderWidth={'1px'}
+          style={{
+            padding: '0 0.2em',
+            lineHeight: '22px',
+            color: baseColor,
+          }}
         >
           {danmaku.medal.level}
-        </Box>
-      </Box>
+        </span>
+      </span>
     );
   };
 
@@ -95,8 +146,8 @@ export function App() {
 
   const renderDanmaku = (danmaku: IDanmaku) => {
     return (
-      <Box>
-        {renderBadge(danmaku)}
+      <Box display={'inline-flex'} height={'24px'}>
+        {renderMedal(danmaku)}
         {/* 官方都已经不显示 level 了，这里也不显示了 */}
         {/* {renderLevel(danmaku)} */}
         <Box as='span' className='username'>
@@ -144,9 +195,10 @@ export function App() {
           name === ENotificationType.INTERACT_WORD
         ) {
           const welcome = data as IWelcome;
-          danmakuList.push({
+          enterList.push({
             key: `${welcome.username} 进入了直播间` + Date.now(),
-            content: `${welcome.username} 进入了直播间`,
+            name: welcome.username,
+            type: name,
           });
         } else if (name === ENotificationType.WATCHED_CHANGE) {
           const watchedChange = data as IPacketWatchedChange;
@@ -163,10 +215,17 @@ export function App() {
   return (
     <Box className='app-container'>
       <Box className='header'>当前人气：{popularity}</Box>
-      <Box className='danmaku-container'>
+      <Box className='danmaku-container' mb={'60px'} overflow={'hidden'}>
         <List spacing={3}>
           {danmakuList.list.map((item) => {
             return <ListItem key={item.key}>{item.content}</ListItem>;
+          })}
+        </List>
+      </Box>
+      <Box marginTop={'50px'} className='danmaku-container' overflow={'hidden'}>
+        <List spacing={3}>
+          {enterList.list.slice(enterList.list.length - 2).map((item) => {
+            return <ListItem key={item.key}>{item.name} 进入了直播间</ListItem>;
           })}
         </List>
       </Box>
