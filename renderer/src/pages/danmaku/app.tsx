@@ -39,11 +39,6 @@ interface IEnterRoomItem {
   type: string;
 }
 
-interface IGiftItem {
-  key: string;
-  content: any;
-}
-
 const kLineHeight = 24;
 const kLineHeightPx = `${kLineHeight}px`;
 
@@ -153,7 +148,7 @@ const DanmakuItem = (props: { data: IDanmaku }) => {
       <Box as='span' className='username'>
         {danmaku.username}
       </Box>
-      :
+      :&nbsp;
       <Box
         as='span'
         className='content'

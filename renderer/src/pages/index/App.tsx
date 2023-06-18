@@ -1,15 +1,28 @@
 import './App.css';
-import { useLocalStorageState } from 'ahooks';
+import { useLocalStorageState, useSetState } from 'ahooks';
 import { Box, Button, Grid, GridItem, List, ListItem } from '@chakra-ui/react';
 import React from 'react';
 import uniq from 'lodash/uniq';
 import { useState } from 'react';
 import { WebviewWithController } from '@/components/webview-controller';
-
+import {
+  FormControl,
+  FormLabel,
+  FormErrorMessage,
+  FormHelperText,
+  Input,
+} from '@chakra-ui/react';
 function App() {
   const [roomId, setRoomId] = useLocalStorageState('roomId', {
     defaultValue: '',
   });
+
+  const [settings, setSettings] = useLocalStorageState('settings', {
+    defaultValue: {},
+    deserializer: JSON.parse,
+    serializer: JSON.stringify,
+  });
+
   const renderDanmaku = () => {
     return (
       <Box className='danmaku-entry'>
@@ -42,9 +55,11 @@ function App() {
 
   const panes = {
     danmaku: {
+      name: '弹幕姬',
       render: renderDanmaku,
     },
     roomManage: {
+      name: '房间管理',
       component: WebviewWithController,
       props: {
         src: 'https://link.bilibili.com/p/center/index#/my-room/start-live',
@@ -54,17 +69,44 @@ function App() {
       keepAlive: true,
     },
     room: {
+      disabled: !settings.roomId,
+      name: '直播间',
       component: WebviewWithController,
       props: {
-        src: 'https://live.bilibili.com/1422245',
+        src: `https://live.bilibili.com/${settings.roomId}`,
         isPersist: true,
         partition: 'bilibili',
+      },
+      keepAlive: true,
+    },
+    settings: {
+      name: '设置',
+      render: () => {
+        return (
+          <Box>
+            <Box>设置</Box>
+            <FormControl>
+              <FormLabel>直播间房号</FormLabel>
+              <Input
+                type='text'
+                onChange={(e) => {
+                  setSettings({
+                    roomId: e.target.value,
+                  });
+                }}
+              />
+              <FormHelperText>用来设置侧边的直播间房号</FormHelperText>
+            </FormControl>
+          </Box>
+        );
       },
       keepAlive: true,
     },
   } as Record<
     string,
     {
+      name: string;
+      disabled?: boolean;
       props?: Record<string, any>;
       render?: () => JSX.Element;
       component?: React.ComponentType | any;
@@ -119,8 +161,11 @@ function App() {
         {/* Header */}
       </GridItem>
       <GridItem bg='pink.300' area={'nav'}>
-        <List userSelect={'none'} spacing={3}>
-          {Object.keys(panes).map((key) => {
+        <List userSelect={'none'} spacing={1}>
+          {Object.entries(panes).map(([key, value]) => {
+            if (value.disabled) {
+              return null;
+            }
             return (
               <ListItem>
                 <Box
@@ -130,7 +175,7 @@ function App() {
                   cursor={'pointer'}
                   onClick={() => setActivePane(key)}
                 >
-                  {key}
+                  {value.name}
                 </Box>
               </ListItem>
             );
