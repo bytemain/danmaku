@@ -1,5 +1,5 @@
 import './app.css';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useColorMode, Box, Flex, Spacer, Divider } from '@chakra-ui/react';
 import { danmakuNotificationChannel } from '@@common/ipc';
 import {
@@ -38,7 +38,6 @@ interface IEnterRoomItem {
   name: string;
   type: string;
 }
-
 const kLineHeight = 24;
 const kLineHeightPx = `${kLineHeight}px`;
 
@@ -233,6 +232,10 @@ export function App() {
     return () => {
       window.removeEventListener(danmakuNotificationChannel, eventListener);
     };
+  }, [danmakuList, enterList]);
+
+  useLayoutEffect(() => {
+    operation.retrieveDanmaku();
   }, []);
 
   const danmakuItemContent = (index: number) => {

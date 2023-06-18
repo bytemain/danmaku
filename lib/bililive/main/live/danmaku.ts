@@ -127,7 +127,7 @@ export class DanmakuClient {
 
   public roomInfo?: IGetInfoResponse['data'];
 
-  #started = false;
+  started = false;
   private hostEventEmitter = new HostEventListener();
 
   static nextId = 0;
@@ -145,6 +145,8 @@ export class DanmakuClient {
   }
 
   static instance(roomId: string) {
+    // 有时候传入的是数字，有时候传入的是字符串
+    roomId = roomId.toString();
     if (this.#instanceMap.has(roomId)) {
       return this.#instanceMap.get(roomId);
     }
@@ -172,11 +174,12 @@ export class DanmakuClient {
   }
 
   async start() {
-    if (this.#started) {
+    if (this.started) {
       console.log('already started');
       return;
     }
-    this.#started = true;
+    this.started = true;
+    console.log(`🚀 ~ file: danmaku.ts:180 ~ DanmakuClient ~ start ~ started:`);
 
     const roomInfo = await this.apiClient.initRoom(this.roomId);
 
@@ -245,5 +248,8 @@ export class AgentEventListener extends EventEmitter {
     return Disposable.create(() => {
       this.off(EMessageEventType.COMMAND, callback);
     });
+  }
+  dispose() {
+    this.removeAllListeners();
   }
 }

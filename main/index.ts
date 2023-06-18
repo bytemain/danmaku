@@ -29,6 +29,7 @@ function isObject(obj: any) {
 interface IDanmakuWindowInfo {
   roomId: string;
   roomInfo: IGetInfoResponse['data'] | undefined;
+  eventEmitter: AgentEventListener;
 }
 
 const danmakuWindowIds = new Map<number, IDanmakuWindowInfo>();
@@ -49,6 +50,29 @@ ipcMain.handle('get-owner-browser-window-id', (event) => {
 
 ipcMain.handle('open-danmaku', (event, roomId) => {
   createDanmakuWindow(roomId);
+});
+
+ipcMain.handle('retrieve-danmaku', async (event, { roomId }) => {
+  console.log(
+    `🚀 ~ file: index.ts:67 ~ ipcMain.handle ~ retrieve-danmaku:`,
+    roomId
+  );
+
+  const win = BrowserWindow.fromWebContents(event.sender);
+  if (!win) return;
+  const danmakuWindowInfo = danmakuWindowIds.get(win.id);
+  console.log(
+    `🚀 ~ file: index.ts:64 ~ ipcMain.handle ~ danmakuWindowInfo:`,
+    danmakuWindowInfo
+  );
+  if (!danmakuWindowInfo) return;
+  const { eventEmitter } = danmakuWindowInfo;
+  const client = DanmakuClient.instance(roomId);
+  console.log(`🚀 ~ file: index.ts:71 ~ ipcMain.handle ~ client:`, client);
+  if (!client) return;
+  if (!client.started) return;
+  console.log('replay events');
+  client.replayEvent(eventEmitter);
 });
 
 let currentTransparency = 80;
@@ -213,10 +237,10 @@ const createDanmakuWindow = (roomId: string) => {
   win.webContents.once('did-stop-loading', async () => {
     const danmakuClient = DanmakuClient.instance(roomId);
 
-    const channelId = danmakuNotificationChannel + win.id;
+    const channelId = danmakuNotificationChannel;
 
     const eventEmitter = new AgentEventListener();
-
+    disposable.add(eventEmitter);
     disposable.add(danmakuClient.addEventEmitter(eventEmitter));
     disposable.add(
       eventEmitter.onCommand((command) => {
@@ -246,15 +270,12 @@ const createDanmakuWindow = (roomId: string) => {
       });
     });
 
-    ipcMain.once('main-world-setup-channel-done' + win.id, () => {
-      danmakuClient.replayEvent(eventEmitter);
-    });
-
     await danmakuClient.start();
     const roomInfo = await danmakuClient.getRoomInfo();
     danmakuWindowIds.set(win.id, {
       roomId,
       roomInfo,
+      eventEmitter,
     });
   });
   win.webContents.openDevTools();
@@ -278,6 +299,15 @@ function buildTray() {
             const win = BrowserWindow.fromId(id);
             if (win) {
               win.close();
+            }
+          },
+        },
+        {
+          label: 'Reload',
+          click: () => {
+            const win = BrowserWindow.fromId(id);
+            if (win) {
+              win.reload();
             }
           },
         },
