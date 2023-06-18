@@ -1,6 +1,6 @@
 import './app.css';
-import { useEffect, useState } from 'react';
-import { List, ListItem, useColorMode, Box } from '@chakra-ui/react';
+import { useEffect, useRef, useState } from 'react';
+import { useColorMode, Box, Flex, Spacer, Divider } from '@chakra-ui/react';
 import { danmakuNotificationChannel } from '@@common/ipc';
 import {
   EMessageEventType,
@@ -14,7 +14,7 @@ import {
   IPacketWatchedChange,
 } from '@@lib/bililive/common/entity';
 import { MoonIcon, SunIcon } from '@chakra-ui/icons';
-
+import { Virtuoso } from 'react-virtuoso';
 import { useDynamicList } from 'ahooks';
 
 import guardV3 from '../../../public/guard-3.webp';
@@ -27,10 +27,10 @@ const getGuardIcon = (guardLevel: number) => {
   }[guardLevel];
 };
 
-interface MessageItem {
-  key: string;
-  content: string | React.ReactElement;
-  icon?: string;
+interface IDanmakuItem {
+  type: ENotificationType;
+  data?: IDanmaku;
+  gift?: IGift;
 }
 
 interface IEnterRoomItem {
@@ -39,16 +39,13 @@ interface IEnterRoomItem {
   type: string;
 }
 
-export function App() {
-  const [popularity, setPopularity] = useState(0);
-  const [watchedChange, setWatchedChange] = useState({
-    num: 0,
-  } as IPacketWatchedChange);
-  const [leftBottomOverlayVisible, setLeftBottomOverlayVisible] =
-    useState(false);
-  const danmakuList = useDynamicList<MessageItem>([]);
-  const enterList = useDynamicList<IEnterRoomItem>([]);
-  const { colorMode, toggleColorMode } = useColorMode();
+interface IGiftItem {
+  key: string;
+  content: any;
+}
+
+const DanmakuItem = (props: { data: IDanmaku }) => {
+  const { data: danmaku } = props;
   const renderMedal = (danmaku: IDanmaku) => {
     console.log(`🚀 ~ file: app.tsx:36 ~ renderBadge ~ danmaku:`, danmaku);
     if (!danmaku.medal) {
@@ -123,7 +120,6 @@ export function App() {
       </span>
     );
   };
-
   // const renderLevel = (danmaku: IDanmaku) => {
   //   const color = `#${danmaku.levelColor.toString(16)}`;
 
@@ -143,30 +139,58 @@ export function App() {
   //     </Box>
   //   );
   // };
-
-  const renderDanmaku = (danmaku: IDanmaku) => {
-    return (
-      <Box display={'inline-flex'} height={'24px'}>
-        {renderMedal(danmaku)}
-        {/* 官方都已经不显示 level 了，这里也不显示了 */}
-        {/* {renderLevel(danmaku)} */}
-        <Box as='span' className='username'>
-          {danmaku.username}
-        </Box>
-        :
-        <Box
-          as='span'
-          className='content'
-          overflowWrap={'anywhere'}
-          wordBreak={'break-all'}
-          lineHeight={'1.5em'}
-        >
-          {danmaku.content}
-        </Box>
+  return (
+    <Box display={'inline-flex'} height={'24px'}>
+      {renderMedal(danmaku)}
+      {/* 官方都已经不显示 level 了，这里也不显示了 */}
+      {/* {renderLevel(danmaku)} */}
+      <Box as='span' className='username'>
+        {danmaku.username}
       </Box>
-    );
-  };
+      :
+      <Box
+        as='span'
+        className='content'
+        overflowWrap={'anywhere'}
+        wordBreak={'break-all'}
+        lineHeight={'1.5em'}
+      >
+        {danmaku.content}
+      </Box>
+    </Box>
+  );
+};
 
+const StickyBottomVirtualList = (props: {
+  height: string;
+  totalCount: number;
+  itemContent: (index: number) => JSX.Element;
+}) => {
+  const { totalCount, itemContent, height } = props;
+  const virtuosoRef = useRef(null);
+
+  return (
+    <Virtuoso
+      ref={virtuosoRef}
+      style={{ height }}
+      totalCount={totalCount}
+      itemContent={itemContent}
+      followOutput={'auto'}
+    />
+  );
+};
+
+export function App() {
+  const [popularity, setPopularity] = useState(0);
+  const [watchedChange, setWatchedChange] = useState({
+    num: 0,
+  } as IPacketWatchedChange);
+  const [leftBottomOverlayVisible, setLeftBottomOverlayVisible] =
+    useState(false);
+  const danmakuList = useDynamicList<IDanmakuItem>([]);
+  const enterList = useDynamicList<IEnterRoomItem>([]);
+  const giftList = useDynamicList<IGiftItem>([]);
+  const { colorMode, toggleColorMode } = useColorMode();
   useEffect(() => {
     const eventListener = (event: Event) => {
       const eventData = (event as MessageEvent).data;
@@ -178,17 +202,15 @@ export function App() {
         if (name === ENotificationType.DANMU_MSG) {
           const danmaku = data as IDanmaku;
           danmakuList.push({
-            key: `${danmaku.username}: ${danmaku.content}` + danmaku.createdAt,
-            content: renderDanmaku(danmaku),
+            type: ENotificationType.DANMU_MSG,
+            data: danmaku,
           });
         } else if (name === ENotificationType.SEND_GIFT) {
           const gift = data as IGift;
           console.log(`🚀 ~ file: app.tsx:131 ~ eventListener ~ gift:`, gift);
           danmakuList.push({
-            key:
-              `${gift.username} 赠送了 ${gift.num} 个 ${gift.giftName}` +
-              Date.now(),
-            content: `${gift.username} 赠送了 ${gift.num} 个 ${gift.giftName}`,
+            type: ENotificationType.SEND_GIFT,
+            gift: gift,
           });
         } else if (
           name === ENotificationType.WELCOME ||
@@ -212,23 +234,77 @@ export function App() {
       window.removeEventListener(danmakuNotificationChannel, eventListener);
     };
   }, []);
+
+  const danmakuItemContent = (index: number) => {
+    const item = danmakuList.list[index];
+    if (item.type === ENotificationType.DANMU_MSG) {
+      const danmaku = item.data!;
+      return (
+        <DanmakuItem
+          key={`${danmaku.username}: ${danmaku.content}` + danmaku.createdAt}
+          data={danmaku}
+        />
+      );
+    } else if (item.type === ENotificationType.SEND_GIFT) {
+      const gift = item.gift!;
+      return (
+        <div
+          style={{
+            height: '24px',
+            lineHeight: '24px',
+          }}
+          key={
+            `${gift.username} 赠送了 ${gift.num} 个 ${gift.giftName}` +
+            Date.now()
+          }
+        >
+          {gift.username} 赠送了 {gift.num} 个 {gift.giftName}
+        </div>
+      );
+    }
+    return <></>;
+  };
+
+  const enterRoomItemContent = (index: number) => {
+    const item = enterList.list[index];
+    return (
+      <div
+        style={{
+          height: '24px',
+          lineHeight: '24px',
+        }}
+        key={item.key}
+      >
+        欢迎 {item.name} 进入直播间
+      </div>
+    );
+  };
+
   return (
-    <Box className='app-container'>
-      <Box className='header'>当前人气：{popularity}</Box>
-      <Box className='danmaku-container' mb={'60px'} overflow={'hidden'}>
-        <List spacing={3}>
-          {danmakuList.list.map((item) => {
-            return <ListItem key={item.key}>{item.content}</ListItem>;
-          })}
-        </List>
-      </Box>
-      <Box marginTop={'50px'} className='danmaku-container' overflow={'hidden'}>
-        <List spacing={3}>
-          {enterList.list.slice(enterList.list.length - 2).map((item) => {
-            return <ListItem key={item.key}>{item.name} 进入了直播间</ListItem>;
-          })}
-        </List>
-      </Box>
+    <Box h='100vh' className='app-container'>
+      <Flex height={'100vh'} direction={'column'}>
+        <Box p='2px' h='24px'>
+          <Box className='header'>当前人气：{popularity}</Box>
+        </Box>
+        <Spacer />
+        <Divider />
+        <Box p='2px'>
+          <StickyBottomVirtualList
+            height={'calc(100vh - 20px - 48px)'}
+            totalCount={danmakuList.list.length}
+            itemContent={danmakuItemContent}
+          />
+        </Box>
+        <Divider />
+        <Box p='2px' height={`${24 + 8}px`}>
+          <StickyBottomVirtualList
+            height={`${24}px`}
+            totalCount={enterList.list.length}
+            itemContent={enterRoomItemContent}
+          />
+        </Box>
+      </Flex>
+
       <Box
         position={'fixed'}
         left={5}
@@ -241,7 +317,10 @@ export function App() {
           setLeftBottomOverlayVisible(false);
         }}
       >
-        <Box visibility={leftBottomOverlayVisible ? 'visible' : 'hidden'}>
+        <Box
+          visibility={leftBottomOverlayVisible ? 'visible' : 'hidden'}
+          display={'flex'}
+        >
           {colorMode === 'light' ? (
             <MoonIcon
               _hover={{
@@ -259,7 +338,7 @@ export function App() {
               onClick={toggleColorMode}
             ></SunIcon>
           )}
-          {watchedChange.num} 人看过
+          <Box ml='5px'>{watchedChange.num} 人看过</Box>
         </Box>
       </Box>
     </Box>
