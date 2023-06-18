@@ -55,25 +55,15 @@ ipcMain.handle('open-danmaku', (event, roomId) => {
 });
 
 ipcMain.handle('retrieve-danmaku', async (event, { roomId }) => {
-  console.log(
-    `🚀 ~ file: index.ts:67 ~ ipcMain.handle ~ retrieve-danmaku:`,
-    roomId
-  );
-
   const win = BrowserWindow.fromWebContents(event.sender);
   if (!win) return;
   const danmakuWindowInfo = danmakuWindowIds.get(win.id);
-  console.log(
-    `🚀 ~ file: index.ts:64 ~ ipcMain.handle ~ danmakuWindowInfo:`,
-    danmakuWindowInfo
-  );
+
   if (!danmakuWindowInfo) return;
   const { eventEmitter } = danmakuWindowInfo;
   const client = DanmakuClient.instance(roomId);
-  console.log(`🚀 ~ file: index.ts:71 ~ ipcMain.handle ~ client:`, client);
   if (!client) return;
   if (!client.started) return;
-  console.log('replay events');
   client.replayEvent(eventEmitter);
 });
 
@@ -90,10 +80,6 @@ ipcMain.handle('danmaku-menu', (event) => {
 
 const createMainWindow = () => {
   const desktopSize = screen.getPrimaryDisplay().workAreaSize;
-  console.log(
-    `🚀 ~ file: index.ts:120 ~ createMainWindow ~ desktopSize:`,
-    desktopSize
-  );
 
   const win = new BrowserWindow({
     width: Math.floor(desktopSize.width * 0.8),

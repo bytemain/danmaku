@@ -46,7 +46,6 @@ const kBottomBarHeight = `${kLineHeight + 8}px`;
 const DanmakuItem = (props: { data: IDanmaku }) => {
   const { data: danmaku } = props;
   const renderMedal = (danmaku: IDanmaku) => {
-    console.log(`🚀 ~ file: app.tsx:36 ~ renderBadge ~ danmaku:`, danmaku);
     if (!danmaku.medal) {
       return null;
     }
@@ -62,7 +61,6 @@ const DanmakuItem = (props: { data: IDanmaku }) => {
     const nextColor = `#${danmaku.medal.nextColor
       .toString(16)
       .padStart(6, '0')}`;
-    console.log(`🚀 ~ file: app.tsx:42 ~ renderBadge ~ color:`, baseColor);
     return (
       <span
         className='badge'

@@ -187,10 +187,7 @@ export class DanmakuClient {
       return this.roomInfo;
     }
     const moreInfo = await this.apiClient.getRoomInfo(this.roomId);
-    console.log(
-      `🚀 ~ file: danmaku.ts:173 ~ DanmakuClient ~ start ~ moreInfo:`,
-      moreInfo
-    );
+
     this.roomInfo = moreInfo;
     return this.roomInfo;
   }
@@ -201,7 +198,6 @@ export class DanmakuClient {
       return;
     }
     this.started = true;
-    console.log(`🚀 ~ file: danmaku.ts:180 ~ DanmakuClient ~ start ~ started:`);
 
     const roomInfo = await this.apiClient.initRoom(this.roomId);
 

@@ -29,10 +29,6 @@ export class Danmaku {
   createdAt: number;
 
   constructor(info: any) {
-    console.log(
-      `🚀 ~ file: danmaku.ts:22 ~ Danmaku ~ constructor ~ info:`,
-      info
-    );
     this.createdAt = info[0][4];
     this.uid = info[2][0];
     this.username = info[2][1];
