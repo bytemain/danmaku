@@ -20,13 +20,27 @@ import { Welcome } from 'lib/bililive/common/entity/welcome';
 
 const chatUrl = 'wss://broadcastlv.chat.bilibili.com:2245/sub';
 
-class WebSocketClient {
-  constructor(public roomInfo: RoomInfo, private eventEmitter: EventEmitter) {}
+class WebSocketClient extends Disposable {
+  ws: WebSocket;
+
+  constructor(public roomInfo: RoomInfo, private eventEmitter: EventEmitter) {
+    super();
+  }
+
+  stop() {
+    try {
+      this.dispose();
+      this.ws.close();
+    } catch (error) {
+      // ignore
+    }
+  }
 
   start() {
     console.log('websocket started');
 
     const ws = new WebSocket(chatUrl);
+    this.ws = ws;
     ws.on('open', () => {
       Packet.EnterRoom(this.roomInfo).send(ws);
     });
@@ -107,13 +121,16 @@ class WebSocketClient {
       }
     });
 
-    this.setupHeartbeat(ws);
+    this.add(this.setupHeartbeat(ws));
   }
-  setupHeartbeat(ws) {
-    setInterval(() => {
+  setupHeartbeat(ws: WebSocket) {
+    const timer = setInterval(() => {
       console.log('send heartbeat');
       Packet.Heartbeat().send(ws);
     }, 30 * 1000);
+    return Disposable.create(() => {
+      clearInterval(timer);
+    });
   }
 }
 
@@ -132,6 +149,7 @@ export class DanmakuClient {
 
   static nextId = 0;
   apiClient: APIClient;
+  wsClient: WebSocketClient;
 
   static getNextId() {
     return this.nextId++;
@@ -160,6 +178,10 @@ export class DanmakuClient {
     return client;
   }
 
+  static getRunningInstances() {
+    return [...this.#instanceMap.values()].filter((client) => client.started);
+  }
+
   async getRoomInfo(): Promise<IGetInfoResponse['data'] | undefined> {
     if (this.roomInfo) {
       return this.roomInfo;
@@ -184,8 +206,17 @@ export class DanmakuClient {
     const roomInfo = await this.apiClient.initRoom(this.roomId);
 
     console.log(`connect to room`, roomInfo);
-    const client = new WebSocketClient(roomInfo, this.hostEventEmitter);
-    client.start();
+    if (this.wsClient) {
+      this.wsClient.stop();
+      delete this.wsClient;
+    }
+    this.wsClient = new WebSocketClient(roomInfo, this.hostEventEmitter);
+    this.wsClient.start();
+  }
+
+  stop() {
+    this.started = false;
+    this.wsClient && this.wsClient.stop();
   }
 
   addEventEmitter(eventEmitter: EventEmitter) {

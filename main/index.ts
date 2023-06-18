@@ -326,6 +326,7 @@ function buildTray() {
           click: () => {
             const win = BrowserWindow.fromId(id);
             if (win) {
+              win.show();
               win.focus();
             }
           },
@@ -363,6 +364,26 @@ function buildTray() {
   if (danmakuWindow.length > 0) {
     danmakuWindow.push({ type: 'separator' });
   }
+
+  const runningDanmakuClients = DanmakuClient.getRunningInstances().map((v) => {
+    return {
+      label: `${v.roomId}`,
+      type: 'submenu',
+      submenu: [
+        {
+          label: 'Stop',
+          click: () => {
+            v.stop();
+          },
+        },
+      ],
+    };
+  }) as Electron.MenuItemConstructorOptions[];
+
+  if (runningDanmakuClients.length > 0) {
+    runningDanmakuClients.push({ type: 'separator' });
+  }
+
   const contextMenu = Menu.buildFromTemplate([
     {
       label: 'Open Main Window',
@@ -376,6 +397,7 @@ function buildTray() {
     },
     { type: 'separator' },
     ...danmakuWindow,
+    ...runningDanmakuClients,
     {
       label: 'Quit',
       role: 'quit',
