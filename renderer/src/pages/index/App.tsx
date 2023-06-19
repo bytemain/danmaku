@@ -157,32 +157,29 @@ function App() {
       gap='1'
       color='blackAlpha.700'
     >
-      <GridItem bg='orange.300' area={'header'}>
-        {/* Header */}
-      </GridItem>
-      <GridItem bg='pink.300' area={'nav'}>
-        <List userSelect={'none'} spacing={1}>
+      <GridItem area={'header'}></GridItem>
+      <GridItem bg={'blue.300'} area={'nav'}>
+        <List className='nav-bar' userSelect={'none'} spacing={1}>
           {Object.entries(panes).map(([key, value]) => {
             if (value.disabled) {
               return null;
             }
             return (
-              <ListItem>
-                <Box
-                  width={'100%'}
-                  border={'1px solid'}
-                  padding={2}
-                  cursor={'pointer'}
-                  onClick={() => setActivePane(key)}
-                >
-                  {value.name}
-                </Box>
+              <ListItem
+                key={value.name}
+                className='nav-item'
+                width={'100%'}
+                padding={2}
+                cursor={'pointer'}
+                onClick={() => setActivePane(key)}
+              >
+                {value.name}
               </ListItem>
             );
           })}
         </List>
       </GridItem>
-      <GridItem bg='green.300' area={'main'}>
+      <GridItem bg={'green.300'} area={'main'}>
         {paneNames.map((key) => {
           const func = panes[key].render;
           const Component = panes[key].component;
@@ -208,9 +205,7 @@ function App() {
           return null;
         })}
       </GridItem>
-      <GridItem bg='blue.300' area={'footer'}>
-        {/* Footer */}
-      </GridItem>
+      <GridItem area={'footer'}></GridItem>
     </Grid>
   );
 }
