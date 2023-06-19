@@ -67,7 +67,7 @@ ipcMain.handle('retrieve-danmaku', async (event, { roomId }) => {
   client.replayEvent(eventEmitter);
 });
 
-let currentTransparency = 80;
+let currentTransparency = 60;
 
 ipcMain.handle('danmaku-menu', (event) => {
   const win = BrowserWindow.fromWebContents(event.sender);
