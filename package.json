@@ -7,12 +7,26 @@
   "scripts": {
     "start": "electron-forge start",
     "build": "tsx build.ts && yarn renderer:build",
+    "dev": "wireit",
     "watch": "tsx build.ts --watch",
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
-    "renderer:dev": "yarn workspace renderer-react dev",
+    "renderer:dev": "wireit",
     "renderer:build": "yarn workspace renderer-react build"
+  },
+  "wireit": {
+    "renderer:dev": {
+      "command": "yarn workspace renderer-react dev",
+      "service": true
+    },
+    "dev": {
+      "command": "electron-forge start",
+      "service": true,
+      "dependencies": [
+        "renderer:dev"
+      ]
+    }
   },
   "devDependencies": {
     "@electron-forge/cli": "^6.1.1",
@@ -39,6 +53,7 @@
     "undici": "^5.22.1",
     "update-electron-app": "^2.0.1",
     "vite": "^4.3.9",
+    "wireit": "^0.9.5",
     "ws": "^8.13.0"
   },
   "repository": {
