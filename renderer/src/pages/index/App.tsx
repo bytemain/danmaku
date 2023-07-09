@@ -8,10 +8,10 @@ import { WebviewWithController } from '@/components/webview-controller';
 import {
   FormControl,
   FormLabel,
-  FormErrorMessage,
   FormHelperText,
   Input,
 } from '@chakra-ui/react';
+
 function App() {
   const [roomId, setRoomId] = useLocalStorageState('roomId', {
     defaultValue: '',
@@ -67,6 +67,7 @@ function App() {
         partition: 'bilibili',
       },
       keepAlive: true,
+      needClick: true,
     },
     room: {
       disabled: !settings.roomId,
@@ -78,6 +79,7 @@ function App() {
         partition: 'bilibili',
       },
       keepAlive: true,
+      needClick: true,
     },
     settings: {
       name: '设置',
@@ -94,6 +96,7 @@ function App() {
                     roomId: e.target.value,
                   });
                 }}
+                value={settings.roomId}
               />
               <FormHelperText>用来设置侧边的直播间房号</FormHelperText>
             </FormControl>
@@ -111,10 +114,17 @@ function App() {
       render?: () => JSX.Element;
       component?: React.ComponentType | any;
       keepAlive?: boolean;
+      needClick?: boolean;
     }
   >;
   const paneNames = Object.keys(panes);
   const [activePane, setActivePane] = useState(paneNames[0]);
+  const [tabState, setTabState] = useSetState<{
+    [key: string]: {
+      activated: boolean;
+    };
+  }>({});
+
   const [history, setHistory] = useLocalStorageState<string[]>(
     'roomIdHistory',
     {
@@ -164,6 +174,7 @@ function App() {
             if (value.disabled) {
               return null;
             }
+            const tabActivated = tabState[key]?.activated;
             return (
               <ListItem
                 key={value.name}
@@ -174,6 +185,20 @@ function App() {
                 onClick={() => setActivePane(key)}
               >
                 {value.name}
+
+                {value.needClick && (
+                  <Box
+                    onClick={() => {
+                      setTabState({
+                        [key]: {
+                          activated: !tabActivated,
+                        },
+                      });
+                    }}
+                  >
+                    {tabActivated ? '▶️' : '⏸️'}
+                  </Box>
+                )}
               </ListItem>
             );
           })}
@@ -184,6 +209,10 @@ function App() {
           const func = panes[key].render;
           const Component = panes[key].component;
           if (panes[key].keepAlive || activePane === key) {
+            if (panes[key].needClick && !tabState[key]?.activated) {
+              return null;
+            }
+
             return (
               <Box
                 key={key}
