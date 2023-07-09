@@ -1,6 +1,6 @@
 import './app.css';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { useColorMode, Box, Flex, Spacer, Divider } from '@chakra-ui/react';
+import { useColorMode, Box, Flex } from '@chakra-ui/react';
 import { danmakuNotificationChannel } from '@@common/ipc';
 import {
   EMessageEventType,
@@ -17,13 +17,15 @@ import { MoonIcon, SunIcon } from '@chakra-ui/icons';
 import { Virtuoso } from 'react-virtuoso';
 import { useDynamicList } from 'ahooks';
 
-import guardV3 from '../../../public/guard-3.webp';
-import guardV2 from '../../../public/guard-2.webp';
+import guardNormalV3 from '../../../public/guard-normal/guard-3.webp';
+import guardNormalV2 from '../../../public/guard-normal/guard-2.webp';
+import guardNormalV1 from '../../../public/guard-normal/guard-1.webp';
 
 const getGuardIcon = (guardLevel: number) => {
   return {
-    2: guardV2,
-    3: guardV3,
+    1: guardNormalV1,
+    2: guardNormalV2,
+    3: guardNormalV3,
   }[guardLevel];
 };
 
@@ -39,15 +41,8 @@ interface IDanmakuItem {
   systemMessage?: string;
 }
 
-interface IEnterRoomItem {
-  key: string;
-  name: string;
-  type: string;
-}
 const kLineHeight = 24;
 const kLineHeightPx = `${kLineHeight}px`;
-
-const kBottomBarHeight = `${kLineHeight + 8}px`;
 
 const DanmakuItem = (props: { data: IDanmaku }) => {
   const { data: danmaku } = props;
