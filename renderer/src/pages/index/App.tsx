@@ -209,10 +209,6 @@ function App() {
           const func = panes[key].render;
           const Component = panes[key].component;
           if (panes[key].keepAlive || activePane === key) {
-            if (panes[key].needClick && !tabState[key]?.activated) {
-              return null;
-            }
-
             return (
               <Box
                 key={key}
@@ -223,7 +219,9 @@ function App() {
                   overflow: 'hidden',
                 }}
               >
-                {func ? (
+                {panes[key].needClick && !tabState[key]?.activated ? (
+                  <div>页面已暂停，请在侧边栏点击启动</div>
+                ) : func ? (
                   func()
                 ) : Component ? (
                   <Component {...panes[key].props} />
