@@ -27,10 +27,16 @@ const getGuardIcon = (guardLevel: number) => {
   }[guardLevel];
 };
 
+enum EMessageItemType {
+  SystemMessage = 'SystemMessage',
+}
+
 interface IDanmakuItem {
-  type: ENotificationType;
+  type: ENotificationType | EMessageItemType;
   data?: IDanmaku;
   gift?: IGift;
+  welcome?: IWelcome;
+  systemMessage?: string;
 }
 
 interface IEnterRoomItem {
@@ -186,7 +192,7 @@ export function App() {
   const [leftBottomOverlayVisible, setLeftBottomOverlayVisible] =
     useState(false);
   const danmakuList = useDynamicList<IDanmakuItem>([]);
-  const enterList = useDynamicList<IEnterRoomItem>([]);
+
   const { colorMode, toggleColorMode } = useColorMode();
   useEffect(() => {
     const eventListener = (event: Event) => {
@@ -214,10 +220,9 @@ export function App() {
           name === ENotificationType.INTERACT_WORD
         ) {
           const welcome = data as IWelcome;
-          enterList.push({
-            key: `${welcome.username} 进入了直播间` + Date.now(),
-            name: welcome.username,
-            type: name,
+          danmakuList.push({
+            type: ENotificationType.WELCOME,
+            welcome,
           });
         } else if (name === ENotificationType.WATCHED_CHANGE) {
           const watchedChange = data as IPacketWatchedChange;
@@ -230,7 +235,14 @@ export function App() {
     return () => {
       window.removeEventListener(danmakuNotificationChannel, eventListener);
     };
-  }, [danmakuList, enterList]);
+  }, [danmakuList]);
+
+  useEffect(() => {
+    danmakuList.push({
+      type: EMessageItemType.SystemMessage,
+      systemMessage: '弹幕服务已连接',
+    });
+  }, []);
 
   useLayoutEffect(() => {
     operation.retrieveDanmaku();
@@ -262,46 +274,43 @@ export function App() {
           {gift.username} 赠送了 {gift.num} 个 {gift.giftName}
         </div>
       );
+    } else if (item.type === ENotificationType.WELCOME) {
+      const welcome = item.welcome!;
+      return (
+        <div
+          style={{
+            height: kLineHeightPx,
+            lineHeight: kLineHeightPx,
+          }}
+          key={`${welcome.username} 进入直播间` + Date.now()}
+        >
+          欢迎 {welcome.username} 进入直播间
+        </div>
+      );
+    } else if (item.type === EMessageItemType.SystemMessage) {
+      return (
+        <div
+          style={{
+            height: kLineHeightPx,
+            lineHeight: kLineHeightPx,
+          }}
+          key={item.systemMessage ?? '' + Date.now()}
+        >
+          {item.systemMessage}
+        </div>
+      );
     }
     return <></>;
-  };
-
-  const enterRoomItemContent = (index: number) => {
-    const item = enterList.list[index];
-    return (
-      <div
-        style={{
-          height: kLineHeightPx,
-          lineHeight: kLineHeightPx,
-        }}
-        key={item.key}
-      >
-        欢迎 {item.name} 进入直播间
-      </div>
-    );
   };
 
   return (
     <Box h='100vh' className='app-container'>
       <Flex height={'100vh'} direction={'column'}>
-        <Box p='2px' h={kLineHeightPx}>
-          <Box className='header'>当前人气：{popularity}</Box>
-        </Box>
-        <Spacer />
-        <Divider />
         <Box p='2px'>
           <StickyBottomVirtualList
-            height={`calc(100vh - ${kLineHeightPx} - ${kBottomBarHeight})`}
+            height={`calc(100vh - ${kLineHeightPx})`}
             totalCount={danmakuList.list.length}
             itemContent={danmakuItemContent}
-          />
-        </Box>
-        <Divider />
-        <Box p='2px' height={kBottomBarHeight}>
-          <StickyBottomVirtualList
-            height={kLineHeightPx}
-            totalCount={enterList.list.length}
-            itemContent={enterRoomItemContent}
           />
         </Box>
       </Flex>
@@ -340,7 +349,9 @@ export function App() {
               onClick={toggleColorMode}
             ></SunIcon>
           )}
-          <Box ml='5px'>{watchedChange.num} 人看过</Box>
+          <Box ml='5px'>
+            {watchedChange.num} 人看过，当前人气：{popularity}
+          </Box>
         </Box>
       </Box>
     </Box>
