@@ -2636,7 +2636,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react@npm:*, @types/react@npm:^18.0.28":
+"@types/react@npm:*":
   version: 18.2.8
   resolution: "@types/react@npm:18.2.8"
   dependencies:
@@ -2644,6 +2644,16 @@ __metadata:
     "@types/scheduler": "*"
     csstype: ^3.0.2
   checksum: 351fe2450d30bff2ceb6aa84788e948317555e5ea22cb44f6778e08c977aab1878a0119bd94bc3d1bec5f5af4a75ffaa2ce111df5cd9d4ce26bfd719e4d971c2
+  languageName: node
+  linkType: hard
+
+"@types/react@npm:^18.2.79":
+  version: 18.2.79
+  resolution: "@types/react@npm:18.2.79"
+  dependencies:
+    "@types/prop-types": "*"
+    csstype: ^3.0.2
+  checksum: 85aa96e0e88725c84d8fc5f04f10a4da6a1f507dde33557ac9cc211414756867721264bfefd9e02bae1288ce2905351d949b652b931e734ea24519ee5c625138
   languageName: node
   linkType: hard
 
@@ -6606,7 +6616,7 @@ __metadata:
     "@chakra-ui/react": ^2.7.0
     "@emotion/react": ^11.11.0
     "@emotion/styled": ^11.11.0
-    "@types/react": ^18.0.28
+    "@types/react": ^18.2.79
     "@types/react-dom": ^18.0.11
     "@vitejs/plugin-react": ^4.0.0
     ahooks: ^3.7.7
