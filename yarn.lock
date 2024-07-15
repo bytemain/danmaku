@@ -6883,13 +6883,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-virtuoso@npm:^4.3.10":
-  version: 4.3.10
-  resolution: "react-virtuoso@npm:4.3.10"
+"react-virtuoso@npm:^4.7.12":
+  version: 4.7.12
+  resolution: "react-virtuoso@npm:4.7.12"
   peerDependencies:
     react: ">=16 || >=17 || >= 18"
     react-dom: ">=16 || >=17 || >= 18"
-  checksum: 1a2747d4b5abcba114ad9a27db4a4057464219c84cef4ae032460ab44f304073e4a115f56f93658844a4e3f76feb8175536618555ecf201bfd61e627a3e8cfb4
+  checksum: 8fe4a5c2ec8629586a3a9afa93cf607e62cbb5b1c16283873991bbc31fea14eec131c2fc63cfe4b04f2588366e9cbc38179f6d698fce5581f3c71aefc6cdbad5
   languageName: node
   linkType: hard
 
@@ -6977,7 +6977,7 @@ __metadata:
     react: ^18.2.0
     react-dom: ^18.2.0
     react-icons: ^4.9.0
-    react-virtuoso: ^4.3.10
+    react-virtuoso: ^4.7.12
   languageName: unknown
   linkType: soft
 
