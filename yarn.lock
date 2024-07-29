@@ -1686,17 +1686,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@electron-forge/maker-rpm@npm:^6.1.1":
-  version: 6.1.1
-  resolution: "@electron-forge/maker-rpm@npm:6.1.1"
+"@electron-forge/maker-rpm@npm:^7.4.0":
+  version: 7.4.0
+  resolution: "@electron-forge/maker-rpm@npm:7.4.0"
   dependencies:
-    "@electron-forge/maker-base": 6.1.1
-    "@electron-forge/shared-types": 6.1.1
+    "@electron-forge/maker-base": 7.4.0
+    "@electron-forge/shared-types": 7.4.0
     electron-installer-redhat: ^3.2.0
   dependenciesMeta:
     electron-installer-redhat:
       optional: true
-  checksum: 41a9ea1dd14cdaafd8e39ea47f474616db30ee56e4c800eb60b9b728a52fd1ef5448e6bcd695c7e0779a7f39a5ecb192d6307499ab2011981d26882b87f29d62
+  checksum: c5c3d98721ff96d6dc494d43cbd4a9efdb28c2164250aeecc50e2e3da7896ec9aff801e536d8d9ad6593a0da1a9078727209dfd25eaf31f3b420a88c96322674
   languageName: node
   linkType: hard
 
@@ -6193,7 +6193,7 @@ __metadata:
   dependencies:
     "@electron-forge/cli": ^6.1.1
     "@electron-forge/maker-deb": ^6.1.1
-    "@electron-forge/maker-rpm": ^6.1.1
+    "@electron-forge/maker-rpm": ^7.4.0
     "@electron-forge/maker-squirrel": ^7.4.0
     "@electron-forge/maker-zip": ^6.1.1
     "@electron-forge/publisher-github": ^6.1.1
